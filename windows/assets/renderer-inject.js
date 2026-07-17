@@ -777,4 +777,4 @@
     ensure();
   });
   return { installed: true, version: "2.0.0", adaptive: true, miku: true };
-})(__DREAM_CSS_JSON__, __DREAM_ART_JSON__, __DREAM_THEME_JSON__)
+})(__DREAM_CSS_JSON__, __DREAM_ART_JSON__, __DREAM_THEME_JSON__, __DREAM_MIKU_SETTINGS_JSON__)

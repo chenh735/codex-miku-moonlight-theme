@@ -93,6 +93,8 @@ foreach ($file in $shippingScripts) {
 $start = Read-Utf8File -Path (Join-Path $scriptsRoot 'start-dream-skin.ps1')
 Assert-Contract ($start.Contains('--remote-debugging-address=127.0.0.1')) `
   'The launcher must bind CDP to 127.0.0.1.'
+Assert-Contract ($start.Contains("'--settings-file'")) `
+  'The launcher must pass the theme-local settings file to the injector.'
 Assert-Contract (-not $start.Contains('--remote-debugging-address=0.0.0.0')) `
   'The launcher must never bind CDP to 0.0.0.0.'
 

@@ -3,13 +3,20 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readImageMetadata } from "./image-metadata.mjs";
+import {
+  readSettings,
+  sanitizeSettings,
+  resolveSettingsPath,
+  writeSettingsAtomic,
+} from "./miku-settings.mjs";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const here = path.dirname(scriptPath);
 const root = path.resolve(here, "..");
-const SKIN_VERSION = "1.2.0";
+const SKIN_VERSION = "2.0.0";
 const MAX_ART_BYTES = 16 * 1024 * 1024;
 const STRONG_THEME_AUDIT_MS = 30000;
+const MIKU_SETTINGS_DEBOUNCE_MS = 300;
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
 const BROWSER_ID_PATTERN = /^[A-Za-z0-9._-]{1,200}$/;
 
@@ -25,6 +32,7 @@ function parseArgs(argv) {
     browserId: null,
     themeDir: path.join(root, "assets"),
     pauseFile: null,
+    settingsFile: resolveSettingsPath(),
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -37,6 +45,7 @@ function parseArgs(argv) {
     else if (arg === "--browser-id") options.browserId = argv[++i];
     else if (arg === "--theme-dir") options.themeDir = path.resolve(argv[++i]);
     else if (arg === "--pause-file") options.pauseFile = path.resolve(argv[++i]);
+    else if (arg === "--settings-file") options.settingsFile = path.resolve(argv[++i]);
     else if (arg === "--screenshot") options.screenshot = path.resolve(argv[++i]);
     else if (arg === "--reload") options.reload = true;
     else if (arg === "--self-test") options.mode = "self-test";
@@ -388,8 +397,14 @@ async function loadTheme(themeDir) {
   };
 }
 
-async function loadPayload(themeDir = path.join(root, "assets"), candidateTheme = null) {
+async function loadPayload(
+  themeDir = path.join(root, "assets"),
+  candidateTheme = null,
+  settingsFile = resolveSettingsPath(),
+  candidateSettings = null,
+) {
   const loadedTheme = candidateTheme ?? await loadTheme(themeDir);
+  const initialSettings = sanitizeSettings(candidateSettings ?? await readSettings(settingsFile));
   const [css, template] = await Promise.all([
     fs.readFile(path.join(root, "assets", "dream-skin.css"), "utf8"),
     fs.readFile(path.join(root, "assets", "renderer-inject.js"), "utf8"),
@@ -401,9 +416,21 @@ async function loadPayload(themeDir = path.join(root, "assets"), candidateTheme 
   const payload = template
     .replace("__DREAM_CSS_JSON__", JSON.stringify(css))
     .replace("__DREAM_ART_JSON__", JSON.stringify(artDataUrl))
-    .replace("__DREAM_THEME_JSON__", JSON.stringify(loadedTheme.theme));
+    .replace("__DREAM_THEME_JSON__", JSON.stringify(loadedTheme.theme))
+    .replace("__DREAM_MIKU_SETTINGS_JSON__", JSON.stringify(initialSettings));
   const { imageBytes: _imageBytes, ...themeState } = loadedTheme;
-  return { ...themeState, payload };
+  const payloadFingerprint = createHash("sha256")
+    .update(loadedTheme.fingerprint)
+    .update("\0")
+    .update(JSON.stringify(initialSettings))
+    .digest("hex");
+  return {
+    ...themeState,
+    themeFingerprint: loadedTheme.fingerprint,
+    fingerprint: payloadFingerprint,
+    settings: initialSettings,
+    payload,
+  };
 }
 
 async function fileExists(filePath) {
@@ -490,6 +517,34 @@ async function connectCodexTargets(port, timeoutMs, expectedBrowserId) {
 
 async function applyToSession(session, payload) {
   return session.evaluate(payload);
+}
+
+async function readRendererSettings(session) {
+  const snapshot = await session.evaluate(`(() => {
+    if (!document.documentElement.classList.contains('codex-miku-theme')) return null;
+    const bridge = window.__CODEX_MIKU_THEME_SETTINGS__ ?? null;
+    if (!bridge || !Number.isSafeInteger(bridge.revision) || bridge.revision < 0) return null;
+    return { revision: bridge.revision, value: bridge.value };
+  })()`);
+  if (!snapshot || !Number.isSafeInteger(snapshot.revision) || snapshot.revision < 0) return null;
+  return {
+    revision: snapshot.revision,
+    value: sanitizeSettings(snapshot.value),
+  };
+}
+
+async function setRendererSettingsStatus(session, revision, status) {
+  const safeStatus = status === "saved" ? "saved" : "error";
+  return session.evaluate(`(() => {
+    const bridge = window.__CODEX_MIKU_THEME_SETTINGS__ ?? null;
+    if (!bridge || bridge.revision !== ${JSON.stringify(revision)}) return false;
+    bridge.status = ${JSON.stringify(safeStatus)};
+    const statusNode = document.querySelector('[data-miku-settings-status="true"]');
+    if (statusNode) {
+      statusNode.textContent = ${JSON.stringify(safeStatus === "saved" ? "设置已保存" : "本次设置未保存")};
+    }
+    return true;
+  })()`);
 }
 
 export function earlyPayloadFor(payload, revision) {
@@ -647,7 +702,7 @@ async function capture(session, outputPath) {
 async function runOneShot(options) {
   const connected = await connectCodexTargets(options.port, options.timeoutMs, options.browserId);
   const loadedPayload = (options.mode === "once" || options.reload)
-    ? await loadPayload(options.themeDir) : null;
+    ? await loadPayload(options.themeDir, null, options.settingsFile) : null;
   const payload = loadedPayload?.payload ?? null;
   const results = [];
   let screenshotCaptured = false;
@@ -694,12 +749,17 @@ async function runWatch(options) {
   const fallbackTargets = new Map();
   const fallbackListeners = new Set();
   const targetFailures = new Map();
+  const settingsRevision = new Map();
+  const pendingSettingsWrites = new Map();
   let stopping = false;
   let listFailures = 0;
   let lastListErrorLogAt = 0;
   let lastThemeErrorLogAt = 0;
   let lastStrongThemeAuditAt = 0;
+  let lastSettingsErrorLogAt = 0;
   let loadedPayload = null;
+  let activeSettings = null;
+  let pendingPayloadOverride = null;
   let paused = false;
   const stop = () => { stopping = true; };
   const rejectTarget = (target, baseDelayMs, error = null) => {
@@ -734,7 +794,8 @@ async function runWatch(options) {
   process.on("SIGTERM", stop);
 
   try {
-    loadedPayload = await loadPayload(options.themeDir);
+    activeSettings = sanitizeSettings(await readSettings(options.settingsFile));
+    loadedPayload = await loadPayload(options.themeDir, null, options.settingsFile, activeSettings);
     lastStrongThemeAuditAt = Date.now();
     paused = await fileExists(options.pauseFile);
     while (!stopping) {
@@ -759,8 +820,10 @@ async function runWatch(options) {
       }
 
       const nextPaused = await fileExists(options.pauseFile);
-      let nextPayload = loadedPayload;
-      if (!nextPaused) {
+      const hasPendingPayloadOverride = Boolean(pendingPayloadOverride);
+      let nextPayload = pendingPayloadOverride ?? loadedPayload;
+      pendingPayloadOverride = null;
+      if (!nextPaused && !hasPendingPayloadOverride) {
         try {
           const now = Date.now();
           let shouldAudit = !loadedPayload || now - lastStrongThemeAuditAt >= STRONG_THEME_AUDIT_MS;
@@ -774,8 +837,13 @@ async function runWatch(options) {
           if (shouldAudit) {
             const candidateTheme = await loadTheme(options.themeDir);
             lastStrongThemeAuditAt = now;
-            if (!loadedPayload || candidateTheme.fingerprint !== loadedPayload.fingerprint) {
-              nextPayload = await loadPayload(options.themeDir, candidateTheme);
+            if (!loadedPayload || candidateTheme.fingerprint !== loadedPayload.themeFingerprint) {
+              nextPayload = await loadPayload(
+                options.themeDir,
+                candidateTheme,
+                options.settingsFile,
+                activeSettings,
+              );
             } else {
               loadedPayload.sourceStamp = candidateTheme.sourceStamp;
             }
@@ -830,6 +898,8 @@ async function runWatch(options) {
             fallbackListeners.delete(id);
             session.close();
             sessions.delete(id);
+            settingsRevision.delete(id);
+            pendingSettingsWrites.delete(id);
           }
         }
         console.log(paused ? "[dream-skin] paused" : `[dream-skin] active theme ${loadedPayload.theme.id}`);
@@ -848,6 +918,8 @@ async function runWatch(options) {
           session.close();
           sessions.delete(id);
           targetFailures.delete(id);
+          settingsRevision.delete(id);
+          pendingSettingsWrites.delete(id);
         }
       }
 
@@ -908,6 +980,64 @@ async function runWatch(options) {
           rejectTarget(target, 2500, error);
         }
       }
+
+      const settingsPollAt = Date.now();
+      for (const [id, session] of sessions) {
+        try {
+          const snapshot = await readRendererSettings(session);
+          if (!snapshot) continue;
+          const signature = JSON.stringify(snapshot.value);
+          const previousSnapshot = settingsRevision.get(id);
+          if (!previousSnapshot || snapshot.revision < previousSnapshot.revision) {
+            settingsRevision.set(id, { revision: snapshot.revision, signature });
+            continue;
+          }
+          if (snapshot.revision === previousSnapshot.revision && signature === previousSnapshot.signature) {
+            continue;
+          }
+          settingsRevision.set(id, { revision: snapshot.revision, signature });
+          pendingSettingsWrites.set(id, {
+            revision: snapshot.revision,
+            value: sanitizeSettings(snapshot.value),
+            dueAt: settingsPollAt + MIKU_SETTINGS_DEBOUNCE_MS,
+          });
+        } catch (error) {
+          if (!session.closed && Date.now() - lastSettingsErrorLogAt >= 30000) {
+            console.error(`[miku-settings] renderer read failed: ${error.message}`);
+            lastSettingsErrorLogAt = Date.now();
+          }
+        }
+      }
+
+      for (const [id, pending] of pendingSettingsWrites) {
+        if (pending.dueAt > Date.now()) continue;
+        const session = sessions.get(id);
+        if (!session || session.closed) {
+          pendingSettingsWrites.delete(id);
+          continue;
+        }
+        try {
+          activeSettings = await writeSettingsAtomic(
+            options.settingsFile,
+            sanitizeSettings(pending.value),
+          );
+          pendingSettingsWrites.delete(id);
+          await setRendererSettingsStatus(session, pending.revision, "saved").catch(() => false);
+          pendingPayloadOverride = await loadPayload(
+            options.themeDir,
+            null,
+            options.settingsFile,
+            activeSettings,
+          );
+        } catch (error) {
+          pendingSettingsWrites.delete(id);
+          await setRendererSettingsStatus(session, pending.revision, "error").catch(() => false);
+          if (Date.now() - lastSettingsErrorLogAt >= 30000) {
+            console.error(`[miku-settings] save failed: ${error.message}`);
+            lastSettingsErrorLogAt = Date.now();
+          }
+        }
+      }
       await new Promise((resolve) => setTimeout(resolve, 1200));
     }
   } finally {
@@ -919,6 +1049,8 @@ async function runWatch(options) {
     earlyScripts.clear();
     fallbackTargets.clear();
     fallbackListeners.clear();
+    settingsRevision.clear();
+    pendingSettingsWrites.clear();
   }
 }
 
@@ -979,8 +1111,13 @@ if (path.resolve(process.argv[1] || "") === path.resolve(scriptPath)) {
   }
   console.log(JSON.stringify({ pass: true, version: SKIN_VERSION, test: "loopback-cdp-validation" }));
   } else if (options.mode === "check-payload") {
-    const loaded = await loadPayload(options.themeDir);
-    const unresolved = ["__DREAM_CSS_JSON__", "__DREAM_ART_JSON__", "__DREAM_THEME_JSON__"]
+    const loaded = await loadPayload(options.themeDir, null, options.settingsFile);
+    const unresolved = [
+      "__DREAM_CSS_JSON__",
+      "__DREAM_ART_JSON__",
+      "__DREAM_THEME_JSON__",
+      "__DREAM_MIKU_SETTINGS_JSON__",
+    ]
       .some((placeholder) => loaded.payload.includes(placeholder));
     if (unresolved) {
       throw new Error("Payload placeholders were not fully replaced");

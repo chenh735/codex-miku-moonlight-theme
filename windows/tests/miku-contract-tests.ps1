@@ -127,4 +127,26 @@ foreach ($forbiddenSubmitPath in @('.click()', 'requestSubmit(', 'KeyboardEvent(
     "Miku prompt cards must not contain a submit path: $forbiddenSubmitPath"
 }
 
+$injectorPath = Join-Path $windowsRoot 'scripts\injector.mjs'
+$injectorSource = [System.IO.File]::ReadAllText($injectorPath, [System.Text.UTF8Encoding]::new($false))
+foreach ($requiredBridge in @(
+    'from "./miku-settings.mjs"',
+    'readSettings',
+    'sanitizeSettings',
+    'resolveSettingsPath',
+    'writeSettingsAtomic',
+    '__DREAM_MIKU_SETTINGS_JSON__',
+    'window.__CODEX_MIKU_THEME_SETTINGS__ ?? null',
+    'MIKU_SETTINGS_DEBOUNCE_MS = 300',
+    '--settings-file',
+    'settingsRevision'
+  )) {
+  Assert-MikuContract ($injectorSource.Contains($requiredBridge)) `
+    "Injector settings bridge is missing: $requiredBridge"
+}
+Assert-MikuContract (-not $injectorSource.Contains('Runtime.addBinding')) `
+  'The settings bridge must not expose a CDP runtime binding.'
+Assert-MikuContract ($renderer.Contains('__DREAM_MIKU_SETTINGS_JSON__')) `
+  'Renderer template must receive sanitized initial settings as a fourth argument.'
+
 Write-Host 'PASS: approved Miku artwork and theme metadata contracts.'

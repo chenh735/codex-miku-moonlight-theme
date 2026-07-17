@@ -175,7 +175,8 @@ try {
       Exit-DreamSkinOperationLock -Mutex $operationLock
       $operationLock = $null
       & $node.Path $Injector --watch --port $Port --browser-id $cdpIdentity.BrowserId `
-        --theme-dir $themePaths.Active --pause-file $themePaths.PauseFile
+        --theme-dir $themePaths.Active --pause-file $themePaths.PauseFile `
+        --settings-file $product.Settings
       $foregroundExitCode = $LASTEXITCODE
       if ($foregroundExitCode -ne 0 -and $pauseWasSet) {
         Set-DreamSkinPaused -Paused $true -StateRoot $StateRoot | Out-Null
@@ -197,7 +198,8 @@ try {
     $injectorArgs = @((ConvertTo-DreamSkinProcessArgument -Value $Injector), '--watch', '--port', "$Port",
       '--browser-id', $cdpIdentity.BrowserId, '--theme-dir',
       (ConvertTo-DreamSkinProcessArgument -Value $themePaths.Active), '--pause-file',
-      (ConvertTo-DreamSkinProcessArgument -Value $themePaths.PauseFile))
+      (ConvertTo-DreamSkinProcessArgument -Value $themePaths.PauseFile), '--settings-file',
+      (ConvertTo-DreamSkinProcessArgument -Value $product.Settings))
     $daemon = Start-Process -FilePath $node.Path -ArgumentList $injectorArgs -WindowStyle Hidden -PassThru `
       -RedirectStandardOutput $StdoutPath -RedirectStandardError $StderrPath
     Start-Sleep -Milliseconds 500
@@ -223,13 +225,15 @@ try {
       profilePath = $ProfilePath
       themeDir = $themePaths.Active
       pauseFile = $themePaths.PauseFile
+      settingsFile = $product.Settings
       createdAt = (Get-Date).ToUniversalTime().ToString('o')
     }
     Write-DreamSkinState -Path $StatePath -State $state
 
     $verify = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
       $Injector, '--verify', '--port', "$Port",
-      '--browser-id', $cdpIdentity.BrowserId, '--timeout-ms', '30000')
+      '--browser-id', $cdpIdentity.BrowserId, '--timeout-ms', '30000',
+      '--settings-file', $product.Settings)
     Write-DreamSkinUtf8FileAtomically -Path $VerifyPath -Content (($verify.Output -join "`r`n") + "`r`n")
     if ($verify.ExitCode -ne 0) { throw "Dream Skin verification failed. See $VerifyPath" }
   } catch {

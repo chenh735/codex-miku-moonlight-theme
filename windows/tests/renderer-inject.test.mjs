@@ -8,10 +8,11 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const windowsRoot = path.resolve(here, "..");
 const template = await fs.readFile(path.join(windowsRoot, "assets", "renderer-inject.js"), "utf8");
 const css = await fs.readFile(path.join(windowsRoot, "assets", "dream-skin.css"), "utf8");
-const buildPayload = (config = {}) => template
+const buildPayload = (config = {}, mikuSettings = {}) => template
   .replace("__DREAM_CSS_JSON__", JSON.stringify(".fixture { color: blue; }"))
   .replace("__DREAM_ART_JSON__", JSON.stringify("data:image/png;base64,AA=="))
-  .replace("__DREAM_THEME_JSON__", JSON.stringify(config));
+  .replace("__DREAM_THEME_JSON__", JSON.stringify(config))
+  .replace("__DREAM_MIKU_SETTINGS_JSON__", JSON.stringify(mikuSettings));
 const payload = buildPayload();
 
 assert.doesNotMatch(
@@ -381,6 +382,15 @@ const metadataWide = createFixture({ shellPresent: true });
 vm.runInNewContext(buildPayload({ artMetadata: { ratio: 16 / 9 } }), metadataWide.context);
 assert.equal(metadataWide.rootClasses.has("dream-art-wide"), true);
 assert.equal(metadataWide.rootClasses.has("dream-art-standard"), false);
+
+const savedSettingsFixture = createFixture({ shellPresent: true });
+vm.runInNewContext(buildPayload({}, {
+  taskOpacity: .23,
+  effects: { stars: false, moonBreathing: true, cityLights: true, borderFlow: true, meteor: true },
+}), savedSettingsFixture.context);
+assert.equal(savedSettingsFixture.rootStyles.get("--miku-task-opacity"), "0.23");
+assert.equal(savedSettingsFixture.rootClasses.has("miku-effect-stars-off"), true);
+assert.equal(savedSettingsFixture.context.window.__CODEX_MIKU_THEME_SETTINGS__.value.taskOpacity, .23);
 
 const composerFixture = createFixture({ shellPresent: true, composerPresent: true });
 vm.runInNewContext(payload, composerFixture.context);
