@@ -47,5 +47,54 @@ Assert-MikuContract ($theme.palette.accent -ceq '#39E6DF') 'Theme cyan accent is
 Assert-MikuContract ($theme.palette.violet -ceq '#7C5CFF') 'Theme violet accent is incorrect.'
 Assert-MikuContract ($theme.palette.pink -ceq '#FF78C6') 'Theme pink accent is incorrect.'
 
-Write-Host 'PASS: approved Miku artwork and theme metadata contracts.'
+$cssPath = Join-Path $windowsRoot 'assets\dream-skin.css'
+$css = [System.IO.File]::ReadAllText($cssPath, [System.Text.UTF8Encoding]::new($false))
+foreach ($requiredCss in @(
+    'html.codex-miku-theme',
+    '#codex-miku-theme-settings',
+    '.codex-miku-hero',
+    '.codex-miku-action-grid',
+    '.codex-miku-action-card',
+    '.codex-miku-stars',
+    '.codex-miku-moon-glow',
+    '.codex-miku-city-lights',
+    '.codex-miku-border-flow',
+    '.codex-miku-meteor',
+    '--miku-task-opacity: 0.15',
+    '@keyframes miku-star-twinkle',
+    '@keyframes miku-moon-breathe',
+    '@keyframes miku-city-pulse',
+    '@keyframes miku-border-flow',
+    '@keyframes miku-meteor-pass',
+    '@media (prefers-reduced-motion: reduce)',
+    '@media (max-width: 900px)',
+    '@media (max-width: 620px)'
+  )) {
+  Assert-MikuContract ($css.Contains($requiredCss)) "Miku CSS is missing: $requiredCss"
+}
 
+foreach ($decorativeSelector in @(
+    '.codex-miku-stars',
+    '.codex-miku-moon-glow',
+    '.codex-miku-city-lights',
+    '.codex-miku-border-flow',
+    '.codex-miku-meteor'
+  )) {
+  $pattern = [regex]::Escape($decorativeSelector) + '[^{]*\{[^}]*pointer-events\s*:\s*none'
+  Assert-MikuContract ([regex]::IsMatch(
+      $css,
+      $pattern,
+      [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+    )) "Decorative layer must ignore pointer input: $decorativeSelector"
+}
+Assert-MikuContract ([regex]::IsMatch(
+    $css,
+    '#codex-miku-theme-settings[^{]*\{[^}]*pointer-events\s*:\s*auto',
+    [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+  )) 'The Miku settings panel must remain interactive.'
+Assert-MikuContract ($css.Contains('animation: miku-meteor-pass 24s')) `
+  'Meteor animation must remain occasional rather than continuous.'
+Assert-MikuContract ($css.Contains('html.codex-miku-theme.codex-miku-task')) `
+  'Task-mode ambient styling must be namespaced and distinct from home.'
+
+Write-Host 'PASS: approved Miku artwork and theme metadata contracts.'

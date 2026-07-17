@@ -640,3 +640,485 @@ html.codex-dream-skin.dream-art-wide main.main-surface
     transition-duration: .01ms !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   MIKU MOONLIGHT V1
+   All custom presentation is scoped to the opt-in root class below.
+   -------------------------------------------------------------------------- */
+
+html.codex-miku-theme {
+  --miku-cyan: #39e6df;
+  --miku-blue: #31a8ff;
+  --miku-violet: #7c5cff;
+  --miku-pink: #ff78c6;
+  --miku-ink: #071327;
+  --miku-glass: rgba(13, 24, 48, 0.62);
+  --miku-glass-strong: rgba(8, 18, 39, 0.82);
+  --miku-line: rgba(109, 236, 244, 0.38);
+  --miku-task-opacity: 0.15;
+  --miku-ease: cubic-bezier(.2, .75, .25, 1);
+  color-scheme: dark;
+}
+
+html.codex-miku-theme[data-miku-appearance="light"] {
+  --miku-ink: #102846;
+  --miku-glass: rgba(239, 249, 255, 0.74);
+  --miku-glass-strong: rgba(244, 250, 255, 0.9);
+  --miku-line: rgba(54, 158, 204, 0.32);
+  color-scheme: light;
+}
+
+html.codex-miku-theme body {
+  background:
+    radial-gradient(circle at 84% 12%, rgba(124, 92, 255, .17), transparent 34%),
+    radial-gradient(circle at 10% 82%, rgba(57, 230, 223, .12), transparent 36%),
+    var(--color-token-bg-primary, #081326) !important;
+}
+
+html.codex-miku-theme .codex-miku-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: none;
+  background-image:
+    linear-gradient(90deg, rgba(3, 11, 25, .68), rgba(3, 11, 25, .2) 48%, rgba(3, 11, 25, .48)),
+    var(--dream-art);
+  background-size: cover;
+  background-position: var(--dream-art-position, 76% 44%);
+  opacity: var(--miku-task-opacity);
+  pointer-events: none;
+}
+
+html.codex-miku-theme.codex-miku-task .codex-miku-ambient {
+  display: block;
+}
+
+html.codex-miku-theme.codex-miku-task body > #root,
+html.codex-miku-theme.codex-miku-task body > [data-reactroot] {
+  position: relative;
+  z-index: 1;
+}
+
+html.codex-miku-theme.codex-miku-task main.main-surface,
+html.codex-miku-theme.codex-miku-task .thread-scroll-container {
+  background: color-mix(in srgb, var(--color-token-bg-primary, #071327) 83%, transparent) !important;
+  backdrop-filter: blur(7px) saturate(112%);
+}
+
+html.codex-miku-theme .codex-miku-hero {
+  position: relative;
+  isolation: isolate;
+  width: min(1180px, calc(100% - 40px));
+  min-height: clamp(420px, 60vh, 690px);
+  margin: 18px auto 136px;
+  overflow: hidden;
+  border: 1px solid rgba(105, 229, 242, .48);
+  border-radius: 30px;
+  background:
+    linear-gradient(90deg, rgba(4, 14, 33, .92) 0%, rgba(4, 14, 33, .57) 42%, rgba(4, 14, 33, .08) 72%),
+    var(--dream-art) var(--dream-art-position, 76% 44%) / cover no-repeat;
+  box-shadow:
+    0 28px 80px rgba(0, 8, 29, .55),
+    0 0 0 1px rgba(124, 92, 255, .18) inset,
+    0 0 42px rgba(49, 168, 255, .2);
+}
+
+html.codex-miku-theme .codex-miku-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(110, 234, 255, .08), transparent 44%),
+    linear-gradient(0deg, rgba(5, 14, 32, .78), transparent 46%);
+  pointer-events: none;
+}
+
+html.codex-miku-theme .codex-miku-hero-copy {
+  width: min(48%, 520px);
+  padding: clamp(46px, 8vh, 88px) 0 0 clamp(30px, 5vw, 70px);
+  color: #f4fcff;
+  text-shadow: 0 2px 24px rgba(0, 8, 24, .7);
+}
+
+html.codex-miku-theme .codex-miku-eyebrow {
+  margin: 0 0 12px;
+  color: var(--miku-cyan);
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+
+html.codex-miku-theme .codex-miku-hero-title {
+  margin: 0;
+  font-size: clamp(36px, 4.6vw, 72px);
+  font-weight: 850;
+  line-height: 1.02;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+
+html.codex-miku-theme .codex-miku-hero-subtitle {
+  max-width: 430px;
+  margin: 18px 0 0;
+  color: rgba(229, 246, 255, .82);
+  font-size: clamp(14px, 1.5vw, 18px);
+  line-height: 1.7;
+}
+
+html.codex-miku-theme .codex-miku-action-grid {
+  position: absolute;
+  right: clamp(22px, 4vw, 58px);
+  bottom: clamp(22px, 4vh, 46px);
+  left: clamp(22px, 4vw, 58px);
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+html.codex-miku-theme .codex-miku-action-card {
+  position: relative;
+  min-height: 126px;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(116, 231, 244, .36);
+  border-radius: 20px;
+  background:
+    linear-gradient(145deg, rgba(247, 253, 255, .88), rgba(214, 228, 255, .65));
+  color: #102846;
+  box-shadow:
+    0 16px 34px rgba(0, 9, 30, .28),
+    0 0 24px rgba(57, 230, 223, .12) inset;
+  backdrop-filter: blur(18px) saturate(145%);
+  cursor: pointer;
+  transition:
+    transform .22s var(--miku-ease),
+    border-color .22s var(--miku-ease),
+    box-shadow .22s var(--miku-ease);
+}
+
+html.codex-miku-theme .codex-miku-action-card:hover,
+html.codex-miku-theme .codex-miku-action-card:focus-visible {
+  transform: translateY(-5px);
+  border-color: rgba(103, 255, 246, .82);
+  box-shadow:
+    0 22px 42px rgba(0, 9, 30, .35),
+    0 0 28px rgba(57, 230, 223, .25);
+  outline: none;
+}
+
+html.codex-miku-theme .codex-miku-action-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--miku-cyan), var(--miku-violet) 72%, var(--miku-pink));
+  color: #fff;
+  font-size: 19px;
+  box-shadow: 0 7px 20px rgba(82, 90, 255, .34);
+}
+
+html.codex-miku-theme .codex-miku-action-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 780;
+  line-height: 1.35;
+}
+
+html.codex-miku-theme .codex-miku-action-hint {
+  display: block;
+  margin-top: 6px;
+  color: rgba(16, 40, 70, .64);
+  font-size: 11px;
+}
+
+html.codex-miku-theme #codex-miku-theme-settings {
+  position: fixed;
+  top: 58px;
+  right: 18px;
+  z-index: 2147483000;
+  width: min(310px, calc(100vw - 32px));
+  max-height: calc(100vh - 78px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--miku-line);
+  border-radius: 18px;
+  background: var(--miku-glass-strong);
+  color: var(--color-token-text-primary, #edfaff);
+  box-shadow: 0 20px 54px rgba(0, 6, 25, .48), 0 0 28px rgba(57, 230, 223, .12);
+  backdrop-filter: blur(22px) saturate(145%);
+  pointer-events: auto;
+}
+
+html.codex-miku-theme #codex-miku-theme-settings[hidden] {
+  display: none;
+}
+
+html.codex-miku-theme .codex-miku-settings-trigger {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: 2147483001;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid rgba(109, 236, 244, .5);
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(17, 37, 72, .9), rgba(71, 45, 134, .86));
+  color: #eaffff;
+  box-shadow: 0 7px 22px rgba(44, 161, 235, .28);
+}
+
+html.codex-miku-theme .codex-miku-setting-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+html.codex-miku-theme .codex-miku-opacity-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+html.codex-miku-theme .codex-miku-opacity-control input[type="range"] {
+  accent-color: var(--miku-cyan);
+}
+
+html.codex-miku-theme .codex-miku-settings-status {
+  min-height: 16px;
+  color: rgba(205, 242, 255, .72);
+  font-size: 11px;
+}
+
+html.codex-miku-theme .codex-miku-settings-reset {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(124, 92, 255, .45);
+  border-radius: 10px;
+  background: rgba(124, 92, 255, .16);
+  color: inherit;
+}
+
+html.codex-miku-theme .codex-miku-toast {
+  position: fixed;
+  right: 22px;
+  bottom: 24px;
+  z-index: 2147483002;
+  max-width: min(360px, calc(100vw - 44px));
+  padding: 10px 14px;
+  border: 1px solid rgba(94, 236, 241, .42);
+  border-radius: 12px;
+  background: rgba(7, 19, 40, .9);
+  color: #efffff;
+  box-shadow: 0 12px 30px rgba(0, 6, 24, .4);
+  pointer-events: none;
+}
+
+html.codex-miku-theme .codex-miku-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background-image:
+    radial-gradient(circle at 8% 18%, rgba(255,255,255,.95) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 26% 12%, rgba(120,245,255,.88) 0 1.2px, transparent 2px),
+    radial-gradient(circle at 48% 22%, rgba(255,190,244,.86) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 68% 12%, rgba(255,255,255,.95) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 28%, rgba(126,239,255,.86) 0 1.2px, transparent 2px);
+  background-size: 170px 130px, 230px 190px, 280px 220px, 310px 250px, 370px 280px;
+  mix-blend-mode: screen;
+  opacity: .72;
+  animation: miku-star-twinkle 4.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+html.codex-miku-theme .codex-miku-moon-glow {
+  position: absolute;
+  top: 3%;
+  right: 13%;
+  z-index: 1;
+  width: clamp(120px, 18vw, 240px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(206, 249, 255, .32), rgba(112, 204, 255, .09) 46%, transparent 72%);
+  filter: blur(2px);
+  animation: miku-moon-breathe 6.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+html.codex-miku-theme .codex-miku-city-lights {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 38%;
+  z-index: 1;
+  height: 34%;
+  background:
+    radial-gradient(circle at 12% 80%, rgba(57,230,223,.5) 0 1px, transparent 3px),
+    radial-gradient(circle at 33% 60%, rgba(255,120,198,.42) 0 1px, transparent 3px),
+    radial-gradient(circle at 52% 76%, rgba(49,168,255,.52) 0 1px, transparent 3px),
+    radial-gradient(circle at 70% 48%, rgba(255,255,255,.45) 0 1px, transparent 3px),
+    radial-gradient(circle at 88% 70%, rgba(124,92,255,.56) 0 1px, transparent 3px);
+  background-size: 48px 38px, 62px 44px, 73px 52px, 91px 58px, 110px 66px;
+  filter: blur(.35px);
+  mix-blend-mode: screen;
+  animation: miku-city-pulse 5.2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+html.codex-miku-theme .codex-miku-border-flow {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  padding: 1px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, transparent 0 22%, var(--miku-cyan) 29%, transparent 36% 62%, var(--miku-pink) 69%, transparent 76%);
+  opacity: .58;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: miku-border-flow 8s linear infinite;
+  pointer-events: none;
+}
+
+html.codex-miku-theme .codex-miku-meteor {
+  position: absolute;
+  top: 12%;
+  left: -18%;
+  z-index: 2;
+  width: 150px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(216, 253, 255, .95));
+  filter: drop-shadow(0 0 8px rgba(83, 225, 255, .8));
+  transform: rotate(-15deg);
+  opacity: 0;
+  animation: miku-meteor-pass 24s ease-in-out infinite;
+  pointer-events: none;
+}
+
+html.codex-miku-theme.miku-effect-stars-off .codex-miku-stars,
+html.codex-miku-theme.miku-effect-moon-off .codex-miku-moon-glow,
+html.codex-miku-theme.miku-effect-city-off .codex-miku-city-lights,
+html.codex-miku-theme.miku-effect-border-off .codex-miku-border-flow,
+html.codex-miku-theme.miku-effect-meteor-off .codex-miku-meteor {
+  display: none !important;
+}
+
+html.codex-miku-theme.miku-effects-paused .codex-miku-stars,
+html.codex-miku-theme.miku-effects-paused .codex-miku-moon-glow,
+html.codex-miku-theme.miku-effects-paused .codex-miku-city-lights,
+html.codex-miku-theme.miku-effects-paused .codex-miku-border-flow,
+html.codex-miku-theme.miku-effects-paused .codex-miku-meteor {
+  animation-play-state: paused !important;
+}
+
+@keyframes miku-star-twinkle {
+  0% { opacity: .34; transform: translate3d(0, 0, 0); }
+  100% { opacity: .82; transform: translate3d(0, -3px, 0); }
+}
+
+@keyframes miku-moon-breathe {
+  0%, 100% { opacity: .46; transform: scale(.92); }
+  50% { opacity: .88; transform: scale(1.08); }
+}
+
+@keyframes miku-city-pulse {
+  0% { opacity: .32; filter: blur(.35px) brightness(.9); }
+  100% { opacity: .76; filter: blur(.35px) brightness(1.35); }
+}
+
+@keyframes miku-border-flow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes miku-meteor-pass {
+  0%, 70% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-15deg); }
+  72% { opacity: 0; }
+  75% { opacity: 1; }
+  83% { opacity: 0; transform: translate3d(135vw, 34vh, 0) rotate(-15deg); }
+  100% { opacity: 0; transform: translate3d(135vw, 34vh, 0) rotate(-15deg); }
+}
+
+@media (max-width: 900px) {
+  html.codex-miku-theme .codex-miku-hero {
+    width: calc(100% - 28px);
+    min-height: 620px;
+    margin-bottom: 118px;
+  }
+
+  html.codex-miku-theme .codex-miku-hero-copy {
+    width: min(72%, 500px);
+  }
+
+  html.codex-miku-theme .codex-miku-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html.codex-miku-theme .codex-miku-action-card {
+    min-height: 104px;
+  }
+}
+
+@media (max-width: 620px) {
+  html.codex-miku-theme .codex-miku-hero {
+    min-height: 760px;
+    margin: 10px auto 100px;
+    border-radius: 22px;
+    background-position: 68% 44%;
+  }
+
+  html.codex-miku-theme .codex-miku-hero-copy {
+    width: calc(100% - 44px);
+    padding: 34px 22px 0;
+  }
+
+  html.codex-miku-theme .codex-miku-action-grid {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  html.codex-miku-theme .codex-miku-action-card {
+    min-height: 82px;
+    padding: 12px 14px 12px 62px;
+  }
+
+  html.codex-miku-theme .codex-miku-action-icon {
+    position: absolute;
+    top: 15px;
+    left: 14px;
+  }
+
+  html.codex-miku-theme #codex-miku-theme-settings {
+    top: 54px;
+    right: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.codex-miku-theme .codex-miku-stars,
+  html.codex-miku-theme .codex-miku-moon-glow,
+  html.codex-miku-theme .codex-miku-city-lights,
+  html.codex-miku-theme .codex-miku-border-flow,
+  html.codex-miku-theme .codex-miku-meteor {
+    animation: none !important;
+  }
+
+  html.codex-miku-theme .codex-miku-action-card {
+    transition: none !important;
+  }
+}
