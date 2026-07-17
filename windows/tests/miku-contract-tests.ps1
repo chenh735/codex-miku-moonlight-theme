@@ -60,7 +60,7 @@ foreach ($requiredCss in @(
     '.codex-miku-city-lights',
     '.codex-miku-border-flow',
     '.codex-miku-meteor',
-    '--miku-task-opacity: 0.15',
+    '--miku-task-opacity: 0.30',
     '@keyframes miku-star-twinkle',
     '@keyframes miku-moon-breathe',
     '@keyframes miku-city-pulse',
@@ -96,6 +96,8 @@ Assert-MikuContract ($css.Contains('animation: miku-meteor-pass 24s')) `
   'Meteor animation must remain occasional rather than continuous.'
 Assert-MikuContract ($css.Contains('html.codex-miku-theme.codex-miku-task')) `
   'Task-mode ambient styling must be namespaced and distinct from home.'
+Assert-MikuContract ($css.Contains('var(--miku-task-surface-opacity)')) `
+  'Task conversation glass must follow the adjustable Miku opacity setting.'
 
 $rendererPath = Join-Path $windowsRoot 'assets\renderer-inject.js'
 $renderer = [System.IO.File]::ReadAllText($rendererPath, [System.Text.UTF8Encoding]::new($false))
@@ -106,6 +108,7 @@ foreach ($requiredRenderer in @(
     'mountMikuSettings',
     'applyMikuSettings',
     'syncMikuLayout',
+    '--miku-task-surface-opacity',
     'window.__CODEX_MIKU_THEME_SETTINGS__',
     'data-codex-miku-owned',
     'min = "5"',

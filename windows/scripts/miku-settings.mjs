@@ -13,7 +13,7 @@ const DEFAULT_EFFECTS = Object.freeze({
 
 export const DEFAULT_SETTINGS = Object.freeze({
   schemaVersion: 1,
-  taskOpacity: 0.15,
+  taskOpacity: 0.30,
   effects: DEFAULT_EFFECTS,
 });
 
@@ -137,4 +137,3 @@ export async function writeSettingsAtomic(filePath, value) {
     await fs.rm(temporaryPath, { force: true }).catch(() => {});
   }
 }
-

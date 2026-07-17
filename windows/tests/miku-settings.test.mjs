@@ -30,7 +30,7 @@ test('exports the exact approved defaults', () => {
   const { DEFAULT_SETTINGS } = subject();
   assert.deepEqual(DEFAULT_SETTINGS, {
     schemaVersion: 1,
-    taskOpacity: 0.15,
+    taskOpacity: 0.30,
     effects: {
       stars: true,
       moonBreathing: true,
@@ -75,8 +75,8 @@ test('clamps finite numeric opacity to five through thirty-five percent', () => 
   const { sanitizeSettings } = subject();
   assert.equal(sanitizeSettings({ taskOpacity: -1 }).taskOpacity, 0.05);
   assert.equal(sanitizeSettings({ taskOpacity: 2 }).taskOpacity, 0.35);
-  assert.equal(sanitizeSettings({ taskOpacity: Number.NaN }).taskOpacity, 0.15);
-  assert.equal(sanitizeSettings({ taskOpacity: '0.2' }).taskOpacity, 0.15);
+  assert.equal(sanitizeSettings({ taskOpacity: Number.NaN }).taskOpacity, 0.30);
+  assert.equal(sanitizeSettings({ taskOpacity: '0.2' }).taskOpacity, 0.30);
 });
 
 test('invalid effect values fall back to approved booleans', () => {
@@ -158,4 +158,3 @@ test('atomic writes leave valid sanitized JSON and no temp artifact', async () =
     assert.deepEqual(entries, ['settings.json']);
   });
 });
-

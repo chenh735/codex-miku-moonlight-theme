@@ -655,7 +655,8 @@ html.codex-miku-theme {
   --miku-glass: rgba(13, 24, 48, 0.62);
   --miku-glass-strong: rgba(8, 18, 39, 0.82);
   --miku-line: rgba(109, 236, 244, 0.38);
-  --miku-task-opacity: 0.15;
+  --miku-task-opacity: 0.30;
+  --miku-task-surface-opacity: 55%;
   --miku-ease: cubic-bezier(.2, .75, .25, 1);
   color-scheme: dark;
 }
@@ -701,7 +702,11 @@ html.codex-miku-theme.codex-miku-task body > [data-reactroot] {
 
 html.codex-miku-theme.codex-miku-task main.main-surface,
 html.codex-miku-theme.codex-miku-task .thread-scroll-container {
-  background: color-mix(in srgb, var(--color-token-bg-primary, #071327) 83%, transparent) !important;
+  background: color-mix(
+    in srgb,
+    var(--color-token-bg-primary, #071327) var(--miku-task-surface-opacity),
+    transparent
+  ) !important;
   backdrop-filter: blur(7px) saturate(112%);
 }
 
