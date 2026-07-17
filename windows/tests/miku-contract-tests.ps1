@@ -98,6 +98,11 @@ Assert-MikuContract ($css.Contains('html.codex-miku-theme.codex-miku-task')) `
   'Task-mode ambient styling must be namespaced and distinct from home.'
 Assert-MikuContract ($css.Contains('var(--miku-task-surface-opacity)')) `
   'Task conversation glass must follow the adjustable Miku opacity setting.'
+Assert-MikuContract ([regex]::IsMatch(
+    $css,
+    'html\.codex-dream-skin\.codex-miku-theme\.codex-miku-task[^\{]*main\.main-surface[^\{]*\{[^}]*background\s*:\s*transparent\s*!important',
+    [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+  )) 'Task main surface must remain transparent so the conversation glass is not double-stacked.'
 
 $rendererPath = Join-Path $windowsRoot 'assets\renderer-inject.js'
 $renderer = [System.IO.File]::ReadAllText($rendererPath, [System.Text.UTF8Encoding]::new($false))

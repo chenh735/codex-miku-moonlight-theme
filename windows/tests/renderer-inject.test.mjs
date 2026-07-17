@@ -252,7 +252,7 @@ const mainResult = vm.runInNewContext(payload, main.context);
 assert.equal(mainResult.installed, true);
 assert.equal(main.rootClasses.has("codex-dream-skin"), true);
 assert.equal(main.rootStyles.get("--dream-art"), 'url("blob:fixture-1")');
-assert.equal(main.rootStyles.get("--miku-task-surface-opacity"), "55%");
+assert.equal(main.rootStyles.get("--miku-task-surface-opacity"), "70%");
 assert.equal(main.nodes.has("codex-dream-skin-style"), true);
 assert.equal(main.nodes.has("codex-dream-skin-chrome"), true);
 assert.equal(main.rootClasses.has("dream-theme-dark"), true);
@@ -400,7 +400,7 @@ vm.runInNewContext(buildPayload({}, {
   effects: { stars: false, moonBreathing: true, cityLights: true, borderFlow: true, meteor: true },
 }), savedSettingsFixture.context);
 assert.equal(savedSettingsFixture.rootStyles.get("--miku-task-opacity"), "0.23");
-assert.equal(savedSettingsFixture.rootStyles.get("--miku-task-surface-opacity"), "62%");
+assert.equal(savedSettingsFixture.rootStyles.get("--miku-task-surface-opacity"), "77%");
 assert.equal(savedSettingsFixture.rootClasses.has("miku-effect-stars-off"), true);
 assert.equal(savedSettingsFixture.context.window.__CODEX_MIKU_THEME_SETTINGS__.value.taskOpacity, .23);
 

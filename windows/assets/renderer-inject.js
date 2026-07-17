@@ -492,7 +492,7 @@
       root.style.setProperty("--miku-task-opacity", mikuSettings.taskOpacity.toFixed(2));
       root.style.setProperty(
         "--miku-task-surface-opacity",
-        `${Math.round((.85 - mikuSettings.taskOpacity) * 100)}%`,
+        `${Math.round((1 - mikuSettings.taskOpacity) * 100)}%`,
       );
       root.classList.toggle("miku-effect-stars-off", !mikuSettings.effects.stars);
       root.classList.toggle("miku-effect-moon-off", !mikuSettings.effects.moonBreathing);
