@@ -193,41 +193,49 @@ function Initialize-DreamSkinThemeStore {
     Ensure-DreamSkinManagedDirectory -Path $directory -Root $paths.Root
   }
   $assetRoot = Join-Path $SkillRoot 'assets'
-  $assetImage = Join-Path $assetRoot 'dream-reference.jpg'
+  $assetTheme = Join-Path $assetRoot 'theme.json'
+  $templateTheme = (Read-DreamSkinUtf8File -Path $assetTheme) | ConvertFrom-Json
+  $assetImageName = "$($templateTheme.image)"
+  if ([string]::IsNullOrWhiteSpace($assetImageName) -or
+    [System.IO.Path]::GetFileName($assetImageName) -cne $assetImageName) {
+    throw 'Bundled theme image must be a plain filename.'
+  }
+  $assetImage = Join-Path $assetRoot $assetImageName
   Assert-DreamSkinImageFile -Path $assetImage
   $activeTheme = Join-Path $paths.Active 'theme.json'
   Assert-DreamSkinNoReparseComponents -Path $activeTheme
   if (-not (Test-Path -LiteralPath $activeTheme -PathType Leaf)) {
     Ensure-DreamSkinManagedDirectory -Path $paths.Active -Root $paths.Root
-    Assert-DreamSkinNoReparseComponents -Path (Join-Path $paths.Active 'dream-reference.jpg')
-    $activeImage = Join-Path $paths.Active 'dream-reference.jpg'
-    Copy-Item -LiteralPath (Join-Path $assetRoot 'dream-reference.jpg') `
-      -Destination $activeImage -Force
+    $activeImage = Join-Path $paths.Active $assetImageName
+    Assert-DreamSkinNoReparseComponents -Path $activeImage
+    Copy-Item -LiteralPath $assetImage -Destination $activeImage -Force
     Assert-DreamSkinNoReparseComponents -Path $activeImage
     Assert-DreamSkinImageFile -Path $activeImage
-    $imageArchive = Join-Path $paths.Images 'dream-reference.jpg'
+    $imageArchive = Join-Path $paths.Images $assetImageName
     Assert-DreamSkinNoReparseComponents -Path $imageArchive
-    Copy-Item -LiteralPath (Join-Path $assetRoot 'dream-reference.jpg') `
-      -Destination $imageArchive -Force
+    Copy-Item -LiteralPath $assetImage -Destination $imageArchive -Force
     Assert-DreamSkinNoReparseComponents -Path $imageArchive
     Assert-DreamSkinImageFile -Path $imageArchive
     Assert-DreamSkinNoReparseComponents -Path $activeTheme
-    Copy-Item -LiteralPath (Join-Path $assetRoot 'theme.json') -Destination $activeTheme -Force
+    Copy-Item -LiteralPath $assetTheme -Destination $activeTheme -Force
   }
-  $presetDirectory = Join-Path $paths.Saved 'preset-romantic-rose'
+  $presetId = "$($templateTheme.id)"
+  if ($presetId -cnotmatch '^[A-Za-z0-9._-]{1,80}$') {
+    throw 'Bundled theme id is invalid for the saved-theme directory.'
+  }
+  $presetDirectory = Join-Path $paths.Saved $presetId
   $presetTheme = Join-Path $presetDirectory 'theme.json'
   Assert-DreamSkinNoReparseComponents -Path $presetDirectory
   Assert-DreamSkinNoReparseComponents -Path $presetTheme
   if (-not (Test-Path -LiteralPath $presetTheme -PathType Leaf)) {
     Ensure-DreamSkinManagedDirectory -Path $presetDirectory -Root $paths.Root
-    $presetImage = Join-Path $presetDirectory 'dream-reference.jpg'
+    $presetImage = Join-Path $presetDirectory $assetImageName
     Assert-DreamSkinNoReparseComponents -Path $presetImage
-    Copy-Item -LiteralPath (Join-Path $assetRoot 'dream-reference.jpg') `
-      -Destination $presetImage -Force
+    Copy-Item -LiteralPath $assetImage -Destination $presetImage -Force
     Assert-DreamSkinNoReparseComponents -Path $presetImage
     Assert-DreamSkinImageFile -Path $presetImage
     Assert-DreamSkinNoReparseComponents -Path $presetTheme
-    Copy-Item -LiteralPath (Join-Path $assetRoot 'theme.json') -Destination $presetTheme -Force
+    Copy-Item -LiteralPath $assetTheme -Destination $presetTheme -Force
   }
   $null = Read-DreamSkinTheme -ThemeDirectory $paths.Active
   return $paths

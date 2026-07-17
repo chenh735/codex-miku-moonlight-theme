@@ -1,0 +1,51 @@
+﻿$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$windowsRoot = Split-Path -Parent $PSScriptRoot
+$assetPath = Join-Path $windowsRoot 'assets\miku-moonlight-hero.png'
+$themePath = Join-Path $windowsRoot 'assets\theme.json'
+$metadataScript = Join-Path $windowsRoot 'scripts\image-metadata.mjs'
+
+function Assert-MikuContract {
+  param(
+    [Parameter(Mandatory = $true)][bool]$Condition,
+    [Parameter(Mandatory = $true)][string]$Message
+  )
+  if (-not $Condition) { throw $Message }
+}
+
+Assert-MikuContract (Test-Path -LiteralPath $assetPath -PathType Leaf) `
+  'The approved Miku moonlight hero asset is missing.'
+
+$asset = Get-Item -LiteralPath $assetPath
+Assert-MikuContract ($asset.Length -le 16MB) 'The approved hero exceeds the 16 MB safety limit.'
+$hash = (Get-FileHash -LiteralPath $assetPath -Algorithm SHA256).Hash
+Assert-MikuContract ($hash -ceq '7FE9F7AF8D0BB394F267B936262204E6020D40B6196B824ED500787A8FF2D7EE') `
+  'The packaged hero is not byte-identical to the user-approved artwork.'
+
+$metadataJson = & node $metadataScript --check $assetPath
+Assert-MikuContract ($LASTEXITCODE -eq 0) 'The approved hero failed strict image metadata validation.'
+$metadata = $metadataJson | ConvertFrom-Json
+Assert-MikuContract ($metadata.width -le 16384 -and $metadata.height -le 16384) `
+  'The approved hero exceeds the 16384 px dimension limit.'
+Assert-MikuContract (($metadata.width * $metadata.height) -le 50000000) `
+  'The approved hero exceeds the 50 MP safety limit.'
+Assert-MikuContract ($metadata.ratio -ge 1.70 -and $metadata.ratio -le 1.85) `
+  'The approved hero must remain a landscape 16:9-class composition.'
+
+$theme = [System.IO.File]::ReadAllText($themePath, [System.Text.UTF8Encoding]::new($false)) |
+  ConvertFrom-Json
+Assert-MikuContract ($theme.schemaVersion -eq 1) 'Theme schemaVersion must remain 1.'
+Assert-MikuContract ($theme.id -ceq 'miku-moonlight-city-v1') 'Theme id is not the approved Miku id.'
+Assert-MikuContract ($theme.name -ceq '初音未来·月光都市') 'Theme name is not the approved title.'
+Assert-MikuContract ($theme.image -ceq 'miku-moonlight-hero.png') 'Theme must reference the approved hero.'
+Assert-MikuContract ($theme.art.focusX -eq 0.76 -and $theme.art.focusY -eq 0.44) `
+  'Theme focus coordinates do not preserve Miku on the right.'
+Assert-MikuContract ($theme.art.safeArea -ceq 'left' -and $theme.art.taskMode -ceq 'ambient') `
+  'Theme art safe-area or task mode is incorrect.'
+Assert-MikuContract ($theme.palette.accent -ceq '#39E6DF') 'Theme cyan accent is incorrect.'
+Assert-MikuContract ($theme.palette.violet -ceq '#7C5CFF') 'Theme violet accent is incorrect.'
+Assert-MikuContract ($theme.palette.pink -ceq '#FF78C6') 'Theme pink accent is incorrect.'
+
+Write-Host 'PASS: approved Miku artwork and theme metadata contracts.'
+
