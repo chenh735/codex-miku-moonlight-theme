@@ -643,8 +643,13 @@ async function verifySession(session) {
     const home = document.querySelector('.dream-home');
     const suggestions = home?.querySelector('.group\\\\/home-suggestions') ?? null;
     const cards = suggestions ? [...suggestions.querySelectorAll('button')].map(box) : [];
+    const root = document.documentElement;
+    const bridge = window.__CODEX_MIKU_THEME_SETTINGS__ ?? null;
+    const mikuHome = root.classList.contains('codex-miku-home');
+    const mikuTask = root.classList.contains('codex-miku-task');
+    const taskOpacity = Number.parseFloat(getComputedStyle(root).getPropertyValue('--miku-task-opacity'));
     const result = {
-      installed: document.documentElement.classList.contains('codex-dream-skin'),
+      installed: root.classList.contains('codex-dream-skin'),
       version: window.__CODEX_DREAM_SKIN_STATE__?.version ?? null,
       expectedVersion: ${JSON.stringify(SKIN_VERSION)},
       stylePresent: Boolean(document.getElementById('codex-dream-skin-style')),
@@ -661,10 +666,19 @@ async function verifySession(session) {
         x: document.documentElement.scrollWidth > document.documentElement.clientWidth,
         y: document.documentElement.scrollHeight > document.documentElement.clientHeight,
       },
+      mikuTheme: root.classList.contains('codex-miku-theme'),
+      mikuMode: mikuHome === mikuTask ? null : mikuHome ? 'home' : 'task',
+      settingsBridge: Boolean(
+        bridge && Number.isSafeInteger(bridge.revision) && bridge.revision >= 0 &&
+        bridge.value && typeof bridge.value === 'object'
+      ),
+      taskOpacity,
+      taskOpacityInRange: Number.isFinite(taskOpacity) && taskOpacity >= .05 && taskOpacity <= .35,
     };
     result.pass = result.installed && result.version === result.expectedVersion &&
       result.stylePresent && result.chromePresent &&
       result.chromePointerEvents === 'none' && Boolean(result.composer) && Boolean(result.sidebar) &&
+      result.mikuTheme && Boolean(result.mikuMode) && result.settingsBridge && result.taskOpacityInRange &&
       (!result.homePresent || (Boolean(result.hero) &&
         (!result.suggestionsPresent || (result.cards.length >= 2 && result.cards.length <= 4))));
     return result;

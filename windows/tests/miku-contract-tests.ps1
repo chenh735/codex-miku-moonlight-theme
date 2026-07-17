@@ -148,5 +148,15 @@ Assert-MikuContract (-not $injectorSource.Contains('Runtime.addBinding')) `
   'The settings bridge must not expose a CDP runtime binding.'
 Assert-MikuContract ($renderer.Contains('__DREAM_MIKU_SETTINGS_JSON__')) `
   'Renderer template must receive sanitized initial settings as a fourth argument.'
+foreach ($requiredProbeField in @(
+    'mikuTheme',
+    'mikuMode',
+    'settingsBridge',
+    'taskOpacity',
+    'taskOpacityInRange'
+  )) {
+  Assert-MikuContract ($injectorSource.Contains($requiredProbeField)) `
+    "Live verifier is missing Miku probe field: $requiredProbeField"
+}
 
 Write-Host 'PASS: approved Miku artwork and theme metadata contracts.'

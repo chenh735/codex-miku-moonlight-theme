@@ -76,8 +76,8 @@ foreach ($entryPoint in @(
 $forbiddenPersistence = @(
   'schtasks',
   'New-Service',
-  'CurrentVersion\\Run',
-  'Start Menu\\Programs\\Startup'
+  'Set-Service',
+  'Register-ScheduledTask'
 )
 foreach ($file in $shippingScripts) {
   $content = Read-Utf8File -Path $file.FullName
@@ -89,6 +89,14 @@ foreach ($file in $shippingScripts) {
       )) "Forbidden persistence mechanism '$pattern' found in $($file.Name)."
   }
 }
+foreach ($file in $shippingScripts) {
+  $content = Read-Utf8File -Path $file.FullName
+  Assert-Contract (-not [regex]::IsMatch(
+      $content,
+      '(?:New|Set)-ItemProperty[\s\S]{0,160}CurrentVersion\\Run',
+      [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+    )) "Shipping script writes a Run-registry persistence value: $($file.Name)"
+}
 
 $start = Read-Utf8File -Path (Join-Path $scriptsRoot 'start-dream-skin.ps1')
 Assert-Contract ($start.Contains('--remote-debugging-address=127.0.0.1')) `
@@ -97,5 +105,33 @@ Assert-Contract ($start.Contains("'--settings-file'")) `
   'The launcher must pass the theme-local settings file to the injector.'
 Assert-Contract (-not $start.Contains('--remote-debugging-address=0.0.0.0')) `
   'The launcher must never bind CDP to 0.0.0.0.'
+
+$verify = Read-Utf8File -Path (Join-Path $scriptsRoot 'verify-dream-skin.ps1')
+foreach ($checkName in @(
+    'OfficialPackage',
+    'LoopbackOnly',
+    'ProcessIdentity',
+    'BrowserId',
+    'RendererTarget',
+    'ThemeRootClass',
+    'MikuHomeOrTaskMode',
+    'SettingsBridge',
+    'TaskOpacityRange',
+    'NoAutostart'
+  )) {
+  Assert-Contract ($verify.Contains($checkName)) "Verifier is missing named check: $checkName"
+}
+
+$qa = Read-Utf8File -Path (Join-Path $windowsRoot 'references\qa-inventory.md')
+$runtimeNotes = Read-Utf8File -Path (Join-Path $windowsRoot 'references\runtime-notes.md')
+Assert-Contract ($qa.Contains('初音未来·月光都市')) 'QA inventory must describe the approved Miku theme.'
+Assert-Contract ($qa.Contains('5%–35%')) 'QA inventory must cover the full opacity range.'
+Assert-Contract ($runtimeNotes.Contains('%LOCALAPPDATA%\CodexMikuMoonlightTheme\runtime\state.json')) `
+  'Runtime notes must document the Miku state path.'
+Assert-Contract (-not $qa.Contains('Arina Hashimoto')) 'QA inventory still describes the old bundled theme.'
+Assert-Contract (-not $runtimeNotes.Contains('%LOCALAPPDATA%\CodexDreamSkin')) `
+  'Runtime notes still document the legacy state root.'
+Assert-Contract ($runtimeNotes.Contains('does not read or write Codex config.toml')) `
+  'Runtime notes must document config.toml non-interference.'
 
 Write-Host 'PASS: Miku product namespace, shortcut, persistence, and loopback contracts.'
