@@ -35,6 +35,8 @@ Assert-Contract ($common.Contains("'settings.json'")) `
   'The shared Windows helpers must define the runtime settings path.'
 Assert-Contract ($common.Contains("'scripts\miku-settings.mjs'")) `
   'The managed runtime must require the Miku settings module.'
+Assert-Contract ($common.Contains('Wait-Process -Id $processId -Timeout 15')) `
+  'A verified injector must receive enough time to exit cleanly on Windows.'
 
 foreach ($file in $shippingScripts) {
   $content = Read-Utf8File -Path $file.FullName
