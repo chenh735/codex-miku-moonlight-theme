@@ -57,6 +57,8 @@ Assert-Contract (-not $installer.Contains('Codex Dream Skin - Tray.lnk')) `
   'Installer must not create a tray shortcut.'
 Assert-Contract (-not $installer.Contains('Start-Process -FilePath $powershell')) `
   'Installer must not launch a persistent tray process.'
+Assert-Contract (-not $installer.Contains('Close Codex before installing')) `
+  'Package-only installation must not require closing a running official Codex session.'
 
 foreach ($entryPoint in @(
     'install-dream-skin.ps1',

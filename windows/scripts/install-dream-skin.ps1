@@ -18,12 +18,6 @@ try {
   if ($registeredInstalls.Count -eq 0) {
     throw 'The official OpenAI.Codex Store package is not installed or its identity cannot be validated.'
   }
-  foreach ($registeredCodex in $registeredInstalls) {
-    if ((Get-DreamSkinCodexProcesses -Codex $registeredCodex).Count -gt 0) {
-      throw 'Close Codex before installing Dream Skin so config.toml cannot change during the transaction.'
-    }
-  }
-
   $product = Get-DreamSkinProductPaths
   $StateRoot = $product.Runtime
   $themePaths = Get-DreamSkinThemePaths -StateRoot $StateRoot
