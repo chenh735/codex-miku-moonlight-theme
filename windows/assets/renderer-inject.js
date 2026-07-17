@@ -1,4 +1,4 @@
-((cssText, artDataUrl, rawConfig) => {
+((cssText, artDataUrl, rawConfig, rawMikuSettings = null) => {
   const STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
   const STYLE_ID = "codex-dream-skin-style";
   const CHROME_ID = "codex-dream-skin-chrome";
@@ -18,6 +18,15 @@
     "dream-task-ambient",
     "dream-task-banner",
     "dream-task-off",
+    "codex-miku-theme",
+    "codex-miku-home",
+    "codex-miku-task",
+    "miku-effect-stars-off",
+    "miku-effect-moon-off",
+    "miku-effect-city-off",
+    "miku-effect-border-off",
+    "miku-effect-meteor-off",
+    "miku-effects-paused",
   ];
   const ROOT_PROPERTIES = [
     "--dream-art",
@@ -27,8 +36,10 @@
     "--dream-accent",
     "--dream-accent-ink",
     "--dream-image-luma",
+    "--miku-task-opacity",
   ];
   const HOME_UTILITY_CLASS = "dream-home-utility";
+  const MIKU_OWNED_SELECTOR = '[data-codex-miku-owned="true"]';
   const installToken = {};
   let samplingNativeShell = false;
   let observer = null;
@@ -85,11 +96,72 @@
     };
   };
 
+  const MIKU_DEFAULT_SETTINGS = Object.freeze({
+    schemaVersion: 1,
+    taskOpacity: .15,
+    effects: Object.freeze({
+      stars: true,
+      moonBreathing: true,
+      cityLights: true,
+      borderFlow: true,
+      meteor: true,
+      paused: false,
+    }),
+  });
+  const normalizeMikuSettings = (value) => {
+    const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    const effects = source.effects && typeof source.effects === "object" &&
+      !Array.isArray(source.effects) ? source.effects : {};
+    const bool = (candidate, fallback) => typeof candidate === "boolean" ? candidate : fallback;
+    const opacity = typeof source.taskOpacity === "number" && Number.isFinite(source.taskOpacity)
+      ? Math.min(.35, Math.max(.05, source.taskOpacity))
+      : MIKU_DEFAULT_SETTINGS.taskOpacity;
+    return {
+      schemaVersion: 1,
+      taskOpacity: opacity,
+      effects: {
+        stars: bool(effects.stars, true),
+        moonBreathing: bool(effects.moonBreathing, true),
+        cityLights: bool(effects.cityLights, true),
+        borderFlow: bool(effects.borderFlow, true),
+        meteor: bool(effects.meteor, true),
+        paused: bool(effects.paused, false),
+      },
+    };
+  };
+  const MIKU_ACTIONS = Object.freeze([
+    {
+      icon: "⌘",
+      label: "探索并理解代码",
+      hint: "梳理结构与关键问题",
+      prompt: "帮我理解并梳理这个代码库：先说明整体结构、关键模块与运行方式，再列出最值得优先处理的三个问题。",
+    },
+    {
+      icon: "✦",
+      label: "构建新功能",
+      hint: "从方案到测试落地",
+      prompt: "根据我的目标构建一个新功能：先澄清必要约束，给出实现方案，再编码、测试并总结改动。",
+    },
+    {
+      icon: "✓",
+      label: "审查代码改动",
+      hint: "检查风险与覆盖率",
+      prompt: "审查当前改动：重点检查正确性、边界条件、安全性和测试覆盖，并按优先级给出可执行建议。",
+    },
+    {
+      icon: "⚒",
+      label: "诊断并修复问题",
+      hint: "定位根因并验证修复",
+      prompt: "诊断并修复当前问题：先复现并定位根因，再进行最小修改，运行相关测试并说明验证结果。",
+    },
+  ]);
+
   const previous = window[STATE_KEY];
   if (previous?.observer) previous.observer.disconnect();
   if (previous?.timer) clearInterval(previous.timer);
   if (previous?.scheduler?.timeout) clearTimeout(previous.scheduler.timeout);
   if (previous?.artUrl) URL.revokeObjectURL(previous.artUrl);
+  document.querySelectorAll(MIKU_OWNED_SELECTOR).forEach((node) => node.remove());
   const artUrl = (() => {
     const comma = artDataUrl.indexOf(",");
     const binary = atob(artDataUrl.slice(comma + 1));
@@ -99,6 +171,17 @@
     return URL.createObjectURL(new Blob([bytes], { type: mime }));
   })();
   const config = normalizeConfig(rawConfig);
+  let mikuSettings = normalizeMikuSettings(
+    rawMikuSettings ?? window.__CODEX_MIKU_THEME_SETTINGS__?.value,
+  );
+  const previousMikuRevision = Number(window.__CODEX_MIKU_THEME_SETTINGS__?.revision);
+  window.__CODEX_MIKU_THEME_SETTINGS__ = {
+    revision: Number.isSafeInteger(previousMikuRevision) && previousMikuRevision >= 0
+      ? previousMikuRevision
+      : 0,
+    value: mikuSettings,
+    status: "ready",
+  };
   let profile = {
     ...defaultProfile,
     aspect: config.initialAspect ?? defaultProfile.aspect,
@@ -106,7 +189,7 @@
   const existingStyle = document.getElementById(STYLE_ID);
   if (existingStyle) {
     existingStyle.textContent = cssText;
-    existingStyle.dataset.dreamVersion = "3";
+    existingStyle.dataset.dreamVersion = "4";
   }
 
   const analyzeArt = () => new Promise((resolve) => {
@@ -283,6 +366,8 @@
     document.querySelectorAll(".dream-task").forEach((node) => node.classList.remove("dream-task"));
     document.querySelectorAll(".dream-home-shell").forEach((node) => node.classList.remove("dream-home-shell"));
     document.querySelectorAll(`.${HOME_UTILITY_CLASS}`).forEach((node) => node.classList.remove(HOME_UTILITY_CLASS));
+    document.querySelectorAll(MIKU_OWNED_SELECTOR).forEach((node) => node.remove());
+    root?.removeAttribute?.("data-miku-appearance");
     document.getElementById(STYLE_ID)?.remove();
     document.getElementById(CHROME_ID)?.remove();
   };
@@ -299,6 +384,7 @@
       : config.taskMode;
     const accent = config.accent || `rgb(${profile.accent.join(" ")})`;
     const accentInk = luminance(...profile.accent) > .42 ? "rgb(26 24 28)" : "rgb(250 248 251)";
+    root.setAttribute?.("data-miku-appearance", appearance);
     root.classList.toggle("dream-theme-light", appearance === "light");
     root.classList.toggle("dream-theme-dark", appearance === "dark");
     root.classList.toggle("dream-art-wide", profile.aspect >= 1.75);
@@ -319,6 +405,261 @@
     root.style.setProperty("--dream-accent", accent);
     root.style.setProperty("--dream-accent-ink", accentInk);
     root.style.setProperty("--dream-image-luma", profile.luma.toFixed(3));
+  };
+
+  const createMikuElement = (tagName, className = "", text = "") => {
+    const element = document.createElement(tagName);
+    if (className) element.className = className;
+    if (text) element.textContent = text;
+    element.setAttribute?.("data-codex-miku-owned", "true");
+    return element;
+  };
+
+  const showMikuToast = (message) => {
+    if (!document.body || typeof document.body.appendChild !== "function") return;
+    document.getElementById("codex-miku-toast")?.remove();
+    const toast = createMikuElement("div", "codex-miku-toast", message);
+    toast.id = "codex-miku-toast";
+    toast.setAttribute?.("role", "status");
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove?.(), 2600);
+  };
+
+  const findNativeComposer = () => {
+    const selectors = [
+      'textarea:not([data-codex-miku-owned="true"])',
+      '[contenteditable="true"][role="textbox"]:not([data-codex-miku-owned="true"])',
+      '[contenteditable="true"]:not([data-codex-miku-owned="true"])',
+    ];
+    for (const selector of selectors) {
+      const candidate = document.querySelector(selector);
+      if (!candidate || candidate.closest?.(MIKU_OWNED_SELECTOR)) continue;
+      return candidate;
+    }
+    return null;
+  };
+
+  const dispatchComposerEvent = (composer, type) => {
+    const event = typeof window.Event === "function"
+      ? new window.Event(type, { bubbles: true })
+      : { type, bubbles: true };
+    composer.dispatchEvent?.(event);
+  };
+
+  const setComposerPrompt = (text) => {
+    const composer = findNativeComposer();
+    if (!composer) {
+      showMikuToast("未找到可用的 Codex 输入框，请先进入可输入页面。");
+      return false;
+    }
+    const tagName = String(composer.tagName || "").toUpperCase();
+    if (tagName === "TEXTAREA" || tagName === "INPUT") {
+      let prototype = Object.getPrototypeOf(composer);
+      let valueSetter = null;
+      while (prototype && !valueSetter) {
+        valueSetter = Object.getOwnPropertyDescriptor(prototype, "value")?.set || null;
+        prototype = Object.getPrototypeOf(prototype);
+      }
+      if (valueSetter) valueSetter.call(composer, text);
+      else composer.value = text;
+    } else {
+      composer.textContent = text;
+    }
+    dispatchComposerEvent(composer, "input");
+    dispatchComposerEvent(composer, "change");
+    composer.focus?.();
+    showMikuToast("提示词已填入，确认后再由你发送。");
+    return true;
+  };
+
+  const updateMikuBridge = (value, bumpRevision = false) => {
+    const previousRevision = Number(window.__CODEX_MIKU_THEME_SETTINGS__?.revision);
+    const revision = Number.isSafeInteger(previousRevision) && previousRevision >= 0
+      ? previousRevision + (bumpRevision ? 1 : 0)
+      : bumpRevision ? 1 : 0;
+    window.__CODEX_MIKU_THEME_SETTINGS__ = {
+      revision,
+      value,
+      status: window.__CODEX_MIKU_THEME_SETTINGS__?.status || "ready",
+    };
+  };
+
+  const applyMikuSettings = (value, options = {}) => {
+    mikuSettings = normalizeMikuSettings(value);
+    const root = document.documentElement;
+    if (root) {
+      root.style.setProperty("--miku-task-opacity", mikuSettings.taskOpacity.toFixed(2));
+      root.classList.toggle("miku-effect-stars-off", !mikuSettings.effects.stars);
+      root.classList.toggle("miku-effect-moon-off", !mikuSettings.effects.moonBreathing);
+      root.classList.toggle("miku-effect-city-off", !mikuSettings.effects.cityLights);
+      root.classList.toggle("miku-effect-border-off", !mikuSettings.effects.borderFlow);
+      root.classList.toggle("miku-effect-meteor-off", !mikuSettings.effects.meteor);
+      root.classList.toggle("miku-effects-paused", mikuSettings.effects.paused);
+    }
+    updateMikuBridge(mikuSettings, Boolean(options.bumpRevision));
+
+    const panel = document.getElementById("codex-miku-theme-settings");
+    const opacity = panel?.querySelector?.('[data-miku-setting="taskOpacity"]');
+    const opacityValue = panel?.querySelector?.("[data-miku-opacity-value]");
+    if (opacity) opacity.value = String(Math.round(mikuSettings.taskOpacity * 100));
+    if (opacityValue) opacityValue.textContent = `${Math.round(mikuSettings.taskOpacity * 100)}%`;
+    for (const key of ["stars", "moonBreathing", "cityLights", "borderFlow", "meteor", "paused"]) {
+      const control = panel?.querySelector?.(`[data-miku-setting="${key}"]`);
+      if (control) control.checked = mikuSettings.effects[key];
+    }
+    return mikuSettings;
+  };
+
+  const mountMikuHome = (home) => {
+    if (!home || typeof home.appendChild !== "function") return null;
+    const existing = document.getElementById("codex-miku-home");
+    if (existing) return existing;
+    const capabilityProbe = document.createElement("div");
+    if (typeof capabilityProbe.appendChild !== "function" ||
+      typeof capabilityProbe.addEventListener !== "function") return null;
+
+    const hero = createMikuElement("section", "codex-miku-hero");
+    hero.id = "codex-miku-home";
+    hero.setAttribute("aria-label", "初音未来·月光都市快捷操作");
+
+    const copy = createMikuElement("div", "codex-miku-hero-copy");
+    copy.appendChild(createMikuElement("p", "codex-miku-eyebrow", "MIKU MOONLIGHT · CODEX"));
+    copy.appendChild(createMikuElement("h1", "codex-miku-hero-title", "我们该构建什么？"));
+    copy.appendChild(createMikuElement(
+      "p",
+      "codex-miku-hero-subtitle",
+      "让灵感在月光城市醒来。选择一个入口，把提示词交给原生输入框后再由你确认发送。",
+    ));
+    hero.appendChild(copy);
+
+    for (const className of [
+      "codex-miku-stars",
+      "codex-miku-moon-glow",
+      "codex-miku-city-lights",
+      "codex-miku-border-flow",
+      "codex-miku-meteor",
+    ]) {
+      const decoration = createMikuElement("div", className);
+      decoration.setAttribute("aria-hidden", "true");
+      hero.appendChild(decoration);
+    }
+
+    const grid = createMikuElement("div", "codex-miku-action-grid");
+    for (const action of MIKU_ACTIONS) {
+      const button = createMikuElement("button", "codex-miku-action-card");
+      button.type = "button";
+      button.setAttribute("aria-label", action.label);
+      button.appendChild(createMikuElement("span", "codex-miku-action-icon", action.icon));
+      button.appendChild(createMikuElement("span", "codex-miku-action-label", action.label));
+      button.appendChild(createMikuElement("span", "codex-miku-action-hint", action.hint));
+      button.addEventListener("click", () => setComposerPrompt(action.prompt));
+      grid.appendChild(button);
+    }
+    hero.appendChild(grid);
+    if (typeof home.prepend === "function") home.prepend(hero);
+    else home.appendChild(hero);
+    return hero;
+  };
+
+  const mountMikuSettings = () => {
+    if (!document.body || typeof document.body.appendChild !== "function") return null;
+    const existing = document.getElementById("codex-miku-theme-settings");
+    if (existing) {
+      applyMikuSettings(mikuSettings);
+      return existing;
+    }
+    const trigger = createMikuElement("button", "codex-miku-settings-trigger", "✦");
+    if (typeof trigger.addEventListener !== "function") return null;
+    trigger.id = "codex-miku-settings-trigger";
+    trigger.type = "button";
+    trigger.setAttribute("aria-label", "打开初音未来主题设置");
+    trigger.setAttribute("aria-expanded", "false");
+
+    const panel = createMikuElement("section");
+    panel.id = "codex-miku-theme-settings";
+    panel.hidden = true;
+    panel.appendChild(createMikuElement("strong", "", "初音未来·月光都市"));
+
+    const opacityRow = createMikuElement("label", "codex-miku-opacity-control");
+    const opacityLabel = createMikuElement("span", "", "任务背景透明度");
+    const opacityValue = createMikuElement("output", "", "15%");
+    opacityValue.setAttribute("data-miku-opacity-value", "true");
+    const input = createMikuElement("input");
+    input.type = "range";
+    input.min = "5";
+    input.max = "35";
+    input.step = "1";
+    input.setAttribute("data-miku-setting", "taskOpacity");
+    opacityRow.appendChild(opacityLabel);
+    opacityRow.appendChild(opacityValue);
+    opacityRow.appendChild(input);
+    panel.appendChild(opacityRow);
+
+    const toggles = [
+      ["stars", "星光"],
+      ["moonBreathing", "月光呼吸"],
+      ["cityLights", "城市灯光"],
+      ["borderFlow", "边框流光"],
+      ["meteor", "流星"],
+      ["paused", "暂停全部动态"],
+    ];
+    for (const [key, labelText] of toggles) {
+      const row = createMikuElement("label", "codex-miku-setting-row");
+      row.appendChild(createMikuElement("span", "", labelText));
+      const toggle = createMikuElement("input");
+      toggle.type = "checkbox";
+      toggle.setAttribute("data-miku-setting", key);
+      row.appendChild(toggle);
+      panel.appendChild(row);
+      toggle.addEventListener("change", () => {
+        const next = normalizeMikuSettings(mikuSettings);
+        next.effects[key] = Boolean(toggle.checked);
+        applyMikuSettings(next, { bumpRevision: true });
+      });
+    }
+
+    const status = createMikuElement("div", "codex-miku-settings-status");
+    status.setAttribute("data-miku-settings-status", "true");
+    status.setAttribute("role", "status");
+    panel.appendChild(status);
+    const reset = createMikuElement("button", "codex-miku-settings-reset", "恢复默认设置");
+    reset.type = "button";
+    reset.addEventListener("click", () => applyMikuSettings(MIKU_DEFAULT_SETTINGS, { bumpRevision: true }));
+    panel.appendChild(reset);
+
+    input.addEventListener("input", () => {
+      const next = normalizeMikuSettings(mikuSettings);
+      next.taskOpacity = Number(input.value) / 100;
+      applyMikuSettings(next, { bumpRevision: true });
+    });
+    trigger.addEventListener("click", () => {
+      panel.hidden = !panel.hidden;
+      trigger.setAttribute("aria-expanded", String(!panel.hidden));
+    });
+    document.body.appendChild(trigger);
+    document.body.appendChild(panel);
+    applyMikuSettings(mikuSettings);
+    return panel;
+  };
+
+  const syncMikuLayout = (home) => {
+    const root = document.documentElement;
+    if (!root || !document.body) return;
+    root.classList.add("codex-miku-theme");
+    root.classList.toggle("codex-miku-home", Boolean(home));
+    root.classList.toggle("codex-miku-task", !home);
+    if (home) mountMikuHome(home);
+    else document.getElementById("codex-miku-home")?.remove();
+
+    let ambient = document.getElementById("codex-miku-ambient");
+    if (!ambient) {
+      ambient = createMikuElement("div", "codex-miku-ambient");
+      ambient.id = "codex-miku-ambient";
+      ambient.setAttribute?.("aria-hidden", "true");
+      document.body.appendChild(ambient);
+    }
+    mountMikuSettings();
+    applyMikuSettings(mikuSettings);
   };
 
   const ensure = () => {
@@ -342,13 +683,18 @@
       style.id = STYLE_ID;
       (document.head || root).appendChild(style);
     }
-    if (style.dataset.dreamVersion !== "3") {
+    if (style.dataset.dreamVersion !== "4") {
       style.textContent = cssText;
-      style.dataset.dreamVersion = "3";
+      style.dataset.dreamVersion = "4";
     }
 
     const home = document.querySelector('[role="main"]:has([data-testid="home-icon"])');
-    for (const candidate of document.querySelectorAll('[role="main"]')) {
+    const routeMains = Array.from(document.querySelectorAll('[role="main"]'));
+    if (!home && routeMains.length === 0) {
+      clearSkinDom();
+      return;
+    }
+    for (const candidate of routeMains) {
       candidate.classList.toggle("dream-home", candidate === home);
       candidate.classList.toggle("dream-task", candidate !== home);
     }
@@ -368,6 +714,7 @@
       document.body.appendChild(chrome);
     }
     chrome.classList.toggle("dream-home-shell", Boolean(home));
+    syncMikuLayout(home);
   };
 
   const cleanup = () => {
@@ -379,6 +726,7 @@
     if (state?.timer) clearInterval(state.timer);
     if (state?.scheduler?.timeout) clearTimeout(state.scheduler.timeout);
     if (state?.artUrl) URL.revokeObjectURL(state.artUrl);
+    delete window.__CODEX_MIKU_THEME_SETTINGS__;
     delete window[STATE_KEY];
     return true;
   };
@@ -403,7 +751,22 @@
   });
   const timer = setInterval(ensure, 5000);
   window[STATE_KEY] = {
-    ensure, cleanup, observer, timer, scheduler, artUrl, profile, config, installToken, version: "1.2.0",
+    ensure,
+    cleanup,
+    observer,
+    timer,
+    scheduler,
+    artUrl,
+    profile,
+    config,
+    installToken,
+    findNativeComposer,
+    setComposerPrompt,
+    mountMikuHome,
+    mountMikuSettings,
+    applyMikuSettings,
+    syncMikuLayout,
+    version: "2.0.0",
   };
   ensure();
   analyzeArt().then((result) => {
@@ -413,5 +776,5 @@
     state.profile = result;
     ensure();
   });
-  return { installed: true, version: "1.2.0", adaptive: true };
+  return { installed: true, version: "2.0.0", adaptive: true, miku: true };
 })(__DREAM_CSS_JSON__, __DREAM_ART_JSON__, __DREAM_THEME_JSON__)

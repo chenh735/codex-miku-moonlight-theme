@@ -29,6 +29,7 @@ function createFixture({
   computedColorScheme = "",
   osAppearance = "light",
   analysisFixture = null,
+  composerPresent = false,
 }) {
   const nodes = new Map();
   const rootClasses = new Set(staleSkin ? ["codex-dream-skin"] : []);
@@ -37,6 +38,8 @@ function createFixture({
   const observers = [];
   let objectUrlCount = 0;
   let hasShell = shellPresent;
+  const composerEvents = [];
+  let composerFocused = false;
   let root;
 
   const queueRootClassMutation = () => {
@@ -107,6 +110,13 @@ function createFixture({
   };
   const staleHome = { classList: makeClassList(new Set(["dream-home"])) };
   const staleShell = { classList: makeClassList(new Set(["dream-home-shell"])) };
+  const composer = {
+    tagName: "TEXTAREA",
+    value: "",
+    dispatchEvent(event) { composerEvents.push(event.type); return true; },
+    focus() { composerFocused = true; },
+    closest() { return null; },
+  };
 
   const createElement = (tagName) => {
     if (tagName === "canvas" && analysisFixture) {
@@ -154,6 +164,7 @@ function createFixture({
       if (selector === '[role="main"]:has([data-testid="home-icon"])') {
         return hasShell && homePresent ? routeMain : null;
       }
+      if (composerPresent && selector.includes('textarea')) return composer;
       return null;
     },
     querySelectorAll(selector) {
@@ -225,6 +236,9 @@ function createFixture({
     revokedUrls,
     routeClasses,
     utilityClasses,
+    composer,
+    composerEvents,
+    get composerFocused() { return composerFocused; },
     setShellPresent(value) { hasShell = value; },
   };
 }
@@ -367,5 +381,16 @@ const metadataWide = createFixture({ shellPresent: true });
 vm.runInNewContext(buildPayload({ artMetadata: { ratio: 16 / 9 } }), metadataWide.context);
 assert.equal(metadataWide.rootClasses.has("dream-art-wide"), true);
 assert.equal(metadataWide.rootClasses.has("dream-art-standard"), false);
+
+const composerFixture = createFixture({ shellPresent: true, composerPresent: true });
+vm.runInNewContext(payload, composerFixture.context);
+const promptText = "只填充，不发送";
+assert.equal(
+  composerFixture.context.window.__CODEX_DREAM_SKIN_STATE__.setComposerPrompt(promptText),
+  true,
+);
+assert.equal(composerFixture.composer.value, promptText);
+assert.deepEqual(composerFixture.composerEvents, ["input", "change"]);
+assert.equal(composerFixture.composerFocused, true);
 
 console.log("PASS: renderer applies adaptive theme metadata and preserves transparent auxiliary windows.");

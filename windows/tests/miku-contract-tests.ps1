@@ -97,4 +97,34 @@ Assert-MikuContract ($css.Contains('animation: miku-meteor-pass 24s')) `
 Assert-MikuContract ($css.Contains('html.codex-miku-theme.codex-miku-task')) `
   'Task-mode ambient styling must be namespaced and distinct from home.'
 
+$rendererPath = Join-Path $windowsRoot 'assets\renderer-inject.js'
+$renderer = [System.IO.File]::ReadAllText($rendererPath, [System.Text.UTF8Encoding]::new($false))
+foreach ($requiredRenderer in @(
+    'findNativeComposer',
+    'setComposerPrompt',
+    'mountMikuHome',
+    'mountMikuSettings',
+    'applyMikuSettings',
+    'syncMikuLayout',
+    'window.__CODEX_MIKU_THEME_SETTINGS__',
+    'data-codex-miku-owned',
+    'min = "5"',
+    'max = "35"',
+    'step = "1"',
+    '探索并理解代码',
+    '构建新功能',
+    '审查代码改动',
+    '诊断并修复问题',
+    '帮我理解并梳理这个代码库：先说明整体结构、关键模块与运行方式，再列出最值得优先处理的三个问题。',
+    '根据我的目标构建一个新功能：先澄清必要约束，给出实现方案，再编码、测试并总结改动。',
+    '审查当前改动：重点检查正确性、边界条件、安全性和测试覆盖，并按优先级给出可执行建议。',
+    '诊断并修复当前问题：先复现并定位根因，再进行最小修改，运行相关测试并说明验证结果。'
+  )) {
+  Assert-MikuContract ($renderer.Contains($requiredRenderer)) "Miku renderer is missing: $requiredRenderer"
+}
+foreach ($forbiddenSubmitPath in @('.click()', 'requestSubmit(', 'KeyboardEvent(', 'key: "Enter"')) {
+  Assert-MikuContract (-not $renderer.Contains($forbiddenSubmitPath)) `
+    "Miku prompt cards must not contain a submit path: $forbiddenSubmitPath"
+}
+
 Write-Host 'PASS: approved Miku artwork and theme metadata contracts.'
