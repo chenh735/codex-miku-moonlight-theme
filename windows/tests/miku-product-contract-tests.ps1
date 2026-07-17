@@ -33,6 +33,8 @@ Assert-Contract ($common.Contains("'runtime'")) `
   'The shared Windows helpers must define the runtime directory.'
 Assert-Contract ($common.Contains("'settings.json'")) `
   'The shared Windows helpers must define the runtime settings path.'
+Assert-Contract ($common.Contains("'scripts\miku-settings.mjs'")) `
+  'The managed runtime must require the Miku settings module.'
 
 foreach ($file in $shippingScripts) {
   $content = Read-Utf8File -Path $file.FullName
