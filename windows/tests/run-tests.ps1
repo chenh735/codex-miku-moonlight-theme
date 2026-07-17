@@ -146,18 +146,16 @@ try {
   foreach ($requiredShortcutBinding in @(
     '$startScript = $engine.Start',
     '$restoreScript = $engine.Restore',
-    '$trayScript = $engine.Tray',
     '$shortcut.WorkingDirectory = $engine.Root',
-    '$restore.WorkingDirectory = $engine.Root',
-    '$tray.WorkingDirectory = $engine.Root'
+    '$restore.WorkingDirectory = $engine.Root'
   )) {
     if (-not $installSource.Contains($requiredShortcutBinding)) {
       throw "Installer shortcut still depends on its source checkout: $requiredShortcutBinding"
     }
   }
-  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 4 -or
+  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 2 -or
     $installSource.Contains('-ExecutionPolicy Bypass')) {
-    throw 'Installer shortcuts or tray launch still bypass the PowerShell execution policy.'
+    throw 'Installer shortcuts still bypass the PowerShell execution policy.'
   }
 
   Remove-Item -LiteralPath $runtimeSourceRoot -Recurse -Force

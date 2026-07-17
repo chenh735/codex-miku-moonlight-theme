@@ -20,13 +20,15 @@ try {
   $node = Get-DreamSkinNodeRuntime
   $currentCodex = Get-DreamSkinCodexInstall
   $codex = $currentCodex
-  $StateRoot = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'
+  $product = Get-DreamSkinProductPaths
+  $StateRoot = $product.Runtime
   $themePaths = Get-DreamSkinThemePaths -StateRoot $StateRoot
   Ensure-DreamSkinManagedDirectory -Path $themePaths.Root -Root $themePaths.Root
-  $StatePath = Join-Path $StateRoot 'state.json'
-  $StdoutPath = Join-Path $StateRoot 'injector.log'
-  $StderrPath = Join-Path $StateRoot 'injector-error.log'
-  $VerifyPath = Join-Path $StateRoot 'verify.log'
+  Ensure-DreamSkinManagedDirectory -Path $product.Logs -Root $product.Root
+  $StatePath = $product.State
+  $StdoutPath = Join-Path $product.Logs 'injector.log'
+  $StderrPath = Join-Path $product.Logs 'injector-error.log'
+  $VerifyPath = Join-Path $product.Logs 'verify.log'
   $themePaths = Initialize-DreamSkinThemeStore -SkillRoot (Split-Path -Parent $PSScriptRoot) -StateRoot $StateRoot
   $pauseWasSet = Test-DreamSkinPaused -StateRoot $StateRoot
 

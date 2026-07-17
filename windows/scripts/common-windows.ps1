@@ -1,5 +1,24 @@
 . (Join-Path $PSScriptRoot 'config-utf8.ps1')
 
+function Get-DreamSkinProductPaths {
+  param([string]$LocalAppData = $env:LOCALAPPDATA)
+  if ([string]::IsNullOrWhiteSpace($LocalAppData)) {
+    throw 'LOCALAPPDATA is unavailable; the Miku theme cannot resolve its managed paths.'
+  }
+  $root = Join-Path ([System.IO.Path]::GetFullPath($LocalAppData)) 'CodexMikuMoonlightTheme'
+  $package = Join-Path $root 'package-v1'
+  $runtime = Join-Path $root 'runtime'
+  $logs = Join-Path $runtime 'logs'
+  return [pscustomobject]@{
+    Root = $root
+    Package = $package
+    Runtime = $runtime
+    Settings = Join-Path $runtime 'settings.json'
+    State = Join-Path $runtime 'state.json'
+    Logs = $logs
+  }
+}
+
 function Enter-DreamSkinOperationLock {
   $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
   $mutex = [System.Threading.Mutex]::new($false, "Local\CodexDreamSkin.$sid.Operation")
@@ -49,8 +68,8 @@ function Test-DreamSkinPathWithin {
 }
 
 function Get-DreamSkinRuntimeEnginePaths {
-  param([string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'))
-  $root = Join-Path ([System.IO.Path]::GetFullPath($StateRoot)) 'engine'
+  param([string]$StateRoot = (Get-DreamSkinProductPaths).Root)
+  $root = Join-Path ([System.IO.Path]::GetFullPath($StateRoot)) 'package-v1'
   $scripts = Join-Path $root 'scripts'
   return [pscustomobject]@{
     Root = $root

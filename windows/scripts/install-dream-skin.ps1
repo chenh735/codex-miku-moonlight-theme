@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [int]$Port = 9335,
   [switch]$NoShortcuts
@@ -24,10 +24,12 @@ try {
     }
   }
 
-  $StateRoot = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'
+  $product = Get-DreamSkinProductPaths
+  $StateRoot = $product.Runtime
   $themePaths = Get-DreamSkinThemePaths -StateRoot $StateRoot
   Ensure-DreamSkinManagedDirectory -Path $themePaths.Root -Root $themePaths.Root
-  $StatePath = Join-Path $StateRoot 'state.json'
+  Ensure-DreamSkinManagedDirectory -Path $product.Logs -Root $product.Root
+  $StatePath = $product.State
   $existingState = Read-DreamSkinState -Path $StatePath
   $savedPathCandidate = Get-DreamSkinCodexStatePathCandidate -State $existingState
   $savedCodex = Resolve-DreamSkinCodexInstallFromState -State $existingState -RegisteredInstalls $registeredInstalls
@@ -36,13 +38,10 @@ try {
     throw 'The saved Codex path is still running but no longer matches a registered Store package. Close it manually before installing.'
   }
   if (Test-DreamSkinTrayActive) {
-    throw 'Exit the Codex Dream Skin tray before reinstalling so every shortcut can move to the new runtime safely.'
+    throw 'Exit the 初音未来·月光都市 theme tray before reinstalling so every shortcut can move safely.'
   }
-  $engine = Install-DreamSkinRuntimeEngine -SkillRoot $SkillRoot -StateRoot $StateRoot
+  $engine = Install-DreamSkinRuntimeEngine -SkillRoot $SkillRoot -StateRoot $product.Root
   $null = Initialize-DreamSkinThemeStore -SkillRoot $engine.Root -StateRoot $StateRoot
-  $ConfigPath = Join-Path $HOME '.codex\config.toml'
-  $BackupPath = Join-Path $StateRoot 'config.before-dream-skin.toml'
-  Install-DreamSkinBaseTheme -ConfigPath $ConfigPath -BackupPath $BackupPath
 
   if (-not $NoShortcuts) {
     $shell = New-Object -ComObject WScript.Shell
@@ -51,42 +50,29 @@ try {
     $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
     $startScript = $engine.Start
     $restoreScript = $engine.Restore
-    $trayScript = $engine.Tray
     $portArgument = if ($PortExplicit) { " -Port $Port" } else { '' }
 
     foreach ($folder in @($desktop, $startMenu)) {
-      $shortcut = $shell.CreateShortcut((Join-Path $folder 'Codex Dream Skin.lnk'))
+      $shortcut = $shell.CreateShortcut((Join-Path $folder 'Codex 初音未来主题.lnk'))
       $shortcut.TargetPath = $powershell
       $shortcut.Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$startScript`"$portArgument -PromptRestart"
       $shortcut.WorkingDirectory = $engine.Root
-      $shortcut.Description = 'Launch the official Codex app with Codex Dream Skin'
+      $shortcut.Description = '使用初音未来·月光都市主题启动官方 Codex'
       $shortcut.Save()
     }
 
-    $restore = $shell.CreateShortcut((Join-Path $desktop 'Codex Dream Skin - Restore.lnk'))
+    $restore = $shell.CreateShortcut((Join-Path $desktop '还原 Codex 官方界面.lnk'))
     $restore.TargetPath = $powershell
     $restore.Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$restoreScript`"$portArgument -RestoreBaseTheme -PromptRestart"
     $restore.WorkingDirectory = $engine.Root
-    $restore.Description = 'Restore the official Codex appearance and close the CDP session'
+    $restore.Description = '关闭主题 CDP 会话并恢复官方 Codex 界面'
     $restore.Save()
-
-    foreach ($folder in @($desktop, $startMenu)) {
-      $tray = $shell.CreateShortcut((Join-Path $folder 'Codex Dream Skin - Tray.lnk'))
-      $tray.TargetPath = $powershell
-      $tray.Arguments = "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File `"$trayScript`"$portArgument"
-      $tray.WorkingDirectory = $engine.Root
-      $tray.Description = 'Open Codex Dream Skin status and theme controls in the system tray'
-      $tray.Save()
-    }
-    Start-Process -FilePath $powershell -ArgumentList `
-      "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy RemoteSigned -File `"$trayScript`"$portArgument" `
-      -WindowStyle Hidden | Out-Null
   }
 
   if ($NoShortcuts) {
-    Write-Host "Codex Dream Skin base theme installed at $($engine.Root). Run $($engine.Start) to launch it."
+    Write-Host "初音未来·月光都市主题已安装到 $($engine.Root)。运行 $($engine.Start) 启动。"
   } else {
-    Write-Host 'Codex Dream Skin installed. The launch shortcut asks before restarting an open Codex window.'
+    Write-Host '初音未来·月光都市主题已安装。启动快捷方式会在重启已打开的 Codex 前征求确认。'
   }
 } finally {
   Exit-DreamSkinOperationLock -Mutex $operationLock

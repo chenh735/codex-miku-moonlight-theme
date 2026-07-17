@@ -12,7 +12,7 @@ $injector = Join-Path $PSScriptRoot 'injector.mjs'
 $operationLock = Enter-DreamSkinOperationLock
 $verifyExitCode = 1
 try {
-  $StatePath = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin\state.json'
+  $StatePath = (Get-DreamSkinProductPaths).State
   $state = Read-DreamSkinState -Path $StatePath
   if (-not $PortExplicit -and $null -ne $state -and $state.port) { $Port = [int]$state.port }
   Assert-DreamSkinPort -Port $Port

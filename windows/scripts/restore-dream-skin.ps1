@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [int]$Port = 9335,
   [switch]$Uninstall,
@@ -35,12 +35,16 @@ try {
   if ($RestoreBaseTheme -and $RecoverConfigBackup) {
     throw 'Choose either -RestoreBaseTheme or -RecoverConfigBackup, not both.'
   }
+  if ($RecoverConfigBackup) {
+    throw 'This theme never modifies Codex config.toml, so there is no configuration backup to recover.'
+  }
   Assert-DreamSkinPort -Port $Port
 
-  $StateRoot = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'
+  $product = Get-DreamSkinProductPaths
+  $StateRoot = $product.Runtime
   $themePaths = Get-DreamSkinThemePaths -StateRoot $StateRoot
   Ensure-DreamSkinManagedDirectory -Path $themePaths.Root -Root $themePaths.Root
-  $StatePath = Join-Path $StateRoot 'state.json'
+  $StatePath = $product.State
   $state = Read-DreamSkinState -Path $StatePath
   if (-not $PortExplicit -and $null -ne $state -and $state.port) {
     $Port = [int]$state.port
@@ -104,17 +108,6 @@ try {
     }
   }
 
-  $backup = Join-Path $StateRoot 'config.before-dream-skin.toml'
-  $config = Join-Path $HOME '.codex\config.toml'
-  if ($RecoverConfigBackup) {
-    if (-not (Test-Path -LiteralPath $backup)) { throw 'No pre-install config backup is available.' }
-    $null = Read-DreamSkinUtf8File -Path $backup
-  } elseif ($RestoreBaseTheme) {
-    if (-not (Test-Path -LiteralPath $backup)) { throw 'No pre-install config backup is available.' }
-    $null = Read-DreamSkinUtf8File -Path $backup
-    $null = Read-DreamSkinUtf8File -Path $config
-  }
-
   $restoreError = $null
   try {
     Stop-DreamSkinTrayProcess
@@ -131,27 +124,15 @@ try {
       Write-Warning "Archived stale Dream Skin state at $staleStatePath"
     }
 
-    if ($RecoverConfigBackup) {
-      $stamp = (Get-Date).ToString('yyyyMMdd-HHmmss-fff') + '-' + [guid]::NewGuid().ToString('N')
-      $recoveryBackup = Join-Path $StateRoot "config.before-recovery-$stamp.toml"
-      Restore-DreamSkinConfigBackup -ConfigPath $config -BackupPath $backup -RecoveryBackupPath $recoveryBackup
-      Write-Host "Recovered the exact pre-install config; previous current config saved at $recoveryBackup"
-    } elseif ($RestoreBaseTheme) {
-      Restore-DreamSkinBaseTheme -ConfigPath $config -BackupPath $backup
-    }
-    if ($RecoverConfigBackup -or $RestoreBaseTheme) {
-      $archiveStamp = (Get-Date).ToString('yyyyMMdd-HHmmss-fff') + '-' + [guid]::NewGuid().ToString('N')
-      $archivePath = Join-Path $StateRoot "config.restored-$archiveStamp.toml"
-      Archive-DreamSkinConfigBackup -BackupPath $backup -ArchivePath $archivePath
-      Write-Host "Archived the completed pre-install backup at $archivePath"
-    }
-
     Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath (Join-Path $StateRoot 'paused') -Force -ErrorAction SilentlyContinue
     if ($Uninstall) {
       $desktop = [Environment]::GetFolderPath('Desktop')
       $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
       @(
+        (Join-Path $desktop 'Codex 初音未来主题.lnk'),
+        (Join-Path $desktop '还原 Codex 官方界面.lnk'),
+        (Join-Path $startMenu 'Codex 初音未来主题.lnk'),
         (Join-Path $desktop 'Codex Dream Skin.lnk'),
         (Join-Path $desktop 'Codex Dream Skin - Restore.lnk'),
         (Join-Path $desktop 'Codex Dream Skin - Tray.lnk'),
@@ -165,6 +146,18 @@ try {
         throw 'Codex cannot be reopened because its current executable is unavailable.'
       }
       $null = Start-DreamSkinCodex -Codex $relaunchCodex
+    }
+    if ($Uninstall) {
+      if (Test-Path -LiteralPath $product.Package) {
+        Remove-DreamSkinRuntimeTree -Path $product.Package -StateRoot $product.Root
+      }
+      if (Test-Path -LiteralPath $product.Runtime) {
+        Remove-DreamSkinRuntimeTree -Path $product.Runtime -StateRoot $product.Root
+      }
+      if ((Test-Path -LiteralPath $product.Root) -and
+        @(Get-ChildItem -LiteralPath $product.Root -Force -ErrorAction Stop).Count -eq 0) {
+        Remove-Item -LiteralPath $product.Root -Force -ErrorAction Stop
+      }
     }
   } catch {
     $restoreError = $_
