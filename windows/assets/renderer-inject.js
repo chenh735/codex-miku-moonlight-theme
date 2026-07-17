@@ -690,11 +690,9 @@
 
     const home = document.querySelector('[role="main"]:has([data-testid="home-icon"])');
     const routeMains = Array.from(document.querySelectorAll('[role="main"]'));
-    if (!home && routeMains.length === 0) {
-      clearSkinDom();
-      return;
-    }
-    for (const candidate of routeMains) {
+    const routeSurfaces = routeMains.length > 0 ? routeMains : [shellMain];
+    shellMain.classList.remove("dream-home", "dream-task");
+    for (const candidate of routeSurfaces) {
       candidate.classList.toggle("dream-home", candidate === home);
       candidate.classList.toggle("dream-task", candidate !== home);
     }

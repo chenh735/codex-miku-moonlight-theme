@@ -31,6 +31,7 @@ function createFixture({
   osAppearance = "light",
   analysisFixture = null,
   composerPresent = false,
+  roleMainPresent = true,
 }) {
   const nodes = new Map();
   const rootClasses = new Set(staleSkin ? ["codex-dream-skin"] : []);
@@ -93,8 +94,9 @@ function createFixture({
       nodes.set(node.id, node);
     },
   };
+  const shellRouteClasses = new Set();
   const shellMain = {
-    classList: makeClassList(),
+    classList: makeClassList(shellRouteClasses),
     getBoundingClientRect() {
       return { left: 290, top: 36, width: 990, height: 784 };
     },
@@ -169,7 +171,7 @@ function createFixture({
       return null;
     },
     querySelectorAll(selector) {
-      if (selector === '[role="main"]') return hasShell ? [routeMain] : [];
+      if (selector === '[role="main"]') return hasShell && roleMainPresent ? [routeMain] : [];
       if (selector === ".dream-task") return routeClasses.has("dream-task") ? [routeMain] : [];
       if (selector === ".dream-home-utility") {
         return utilityClasses.has("dream-home-utility") ? [utilityNode] : [];
@@ -236,6 +238,7 @@ function createFixture({
     rootStyles,
     revokedUrls,
     routeClasses,
+    shellRouteClasses,
     utilityClasses,
     composer,
     composerEvents,
@@ -261,6 +264,13 @@ assert.equal(main.rootClasses.has("dream-theme-dark"), false);
 assert.equal(main.nodes.has("codex-dream-skin-style"), false);
 assert.equal(main.nodes.has("codex-dream-skin-chrome"), false);
 assert.deepEqual(main.revokedUrls, ["blob:fixture-1"]);
+
+const conversationWithoutRoleMain = createFixture({ shellPresent: true, roleMainPresent: false });
+const conversationResult = vm.runInNewContext(payload, conversationWithoutRoleMain.context);
+assert.equal(conversationResult.installed, true);
+assert.equal(conversationWithoutRoleMain.rootClasses.has("codex-miku-theme"), true);
+assert.equal(conversationWithoutRoleMain.rootClasses.has("codex-miku-task"), true);
+assert.equal(conversationWithoutRoleMain.shellRouteClasses.has("dream-task"), true);
 
 const reinjected = createFixture({ shellPresent: true });
 vm.runInNewContext(payload, reinjected.context);
