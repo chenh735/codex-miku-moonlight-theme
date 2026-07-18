@@ -28,6 +28,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-
 - `Codex Dream Skin - Tray`：打开系统托盘主题控制。
 - `Codex Dream Skin - Restore`：恢复官方外观并关闭已保存的 CDP 会话。
 
+本主题定制包会为桌面和开始菜单中的“Codex 初音未来主题”使用青绿色 Miku 音乐字标。若要固定到任务栏，请在开始菜单中右键该主题入口并选择“固定到任务栏”；普通 Codex 图标仍启动官方界面。
+
 安装命令中的 `Bypass` 只作用于这一次由用户明确发起的安装进程。安装器会先校验运行时副本的 SHA-256，再仅对 `%LOCALAPPDATA%\CodexDreamSkin\engine` 中受管的 PowerShell 副本清除下载区标记。日常快捷方式使用 `RemoteSigned`，不会绕过系统或企业组策略。
 
 如需使用自定义端口，可以在安装时传入 `-Port`。端口范围必须是 `1024` 到 `65535`。
