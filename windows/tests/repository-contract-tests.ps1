@@ -106,6 +106,8 @@ foreach ($required in @(
     "tags: ['v*']",
     'contents: write',
     'runs-on: windows-latest',
+    'actions/checkout@v7',
+    'actions/setup-node@v7',
     'node-version: 22',
     'shell: pwsh',
     'pwsh -NoProfile',
@@ -120,5 +122,7 @@ foreach ($required in @(
 }
 Assert-RepositoryContract (-not $workflow.Contains('pull_request_target')) 'Release workflow must not use pull_request_target.'
 Assert-RepositoryContract (-not $workflow.Contains('0.0.0.0')) 'Release workflow must not weaken the loopback contract.'
+Assert-RepositoryContract (-not $workflow.Contains('actions/checkout@v4')) 'Release workflow uses the deprecated checkout Node 20 runtime.'
+Assert-RepositoryContract (-not $workflow.Contains('actions/setup-node@v4')) 'Release workflow uses the deprecated setup-node Node 20 runtime.'
 
 Write-Host 'PASS: root repository entry-point contracts.'
