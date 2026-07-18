@@ -673,7 +673,7 @@ async function verifySession(session) {
         bridge.value && typeof bridge.value === 'object'
       ),
       taskOpacity,
-      taskOpacityInRange: Number.isFinite(taskOpacity) && taskOpacity >= .05 && taskOpacity <= .35,
+      taskOpacityInRange: Number.isFinite(taskOpacity) && taskOpacity >= .05 && taskOpacity <= 1,
     };
     result.pass = result.installed && result.version === result.expectedVersion &&
       result.stylePresent && result.chromePresent &&

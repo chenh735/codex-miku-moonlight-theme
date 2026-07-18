@@ -171,6 +171,7 @@ foreach ($requiredBridge in @(
     'sanitizeSettings',
     'resolveSettingsPath',
     'writeSettingsAtomic',
+    'taskOpacity <= 1',
     '__DREAM_MIKU_SETTINGS_JSON__',
     'window.__CODEX_MIKU_THEME_SETTINGS__ ?? null',
     'MIKU_SETTINGS_DEBOUNCE_MS = 300',
