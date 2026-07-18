@@ -505,9 +505,9 @@
 
     const panel = document.getElementById("codex-miku-theme-settings");
     const opacity = panel?.querySelector?.('[data-miku-setting="taskOpacity"]');
-    const opacityValue = panel?.querySelector?.("[data-miku-opacity-value]");
-    if (opacity) opacity.value = String(Math.round(mikuSettings.taskOpacity * 100));
-    if (opacityValue) opacityValue.textContent = `${Math.round(mikuSettings.taskOpacity * 100)}%`;
+    if (opacity && document.activeElement !== opacity) {
+      opacity.value = String(Math.round(mikuSettings.taskOpacity * 100));
+    }
     for (const key of ["stars", "moonBreathing", "cityLights", "borderFlow", "meteor", "paused"]) {
       const control = panel?.querySelector?.(`[data-miku-setting="${key}"]`);
       if (control) control.checked = mikuSettings.effects[key];
@@ -585,19 +585,31 @@
     panel.hidden = true;
     panel.appendChild(createMikuElement("strong", "", "初音未来·月光都市"));
 
-    const opacityRow = createMikuElement("label", "codex-miku-opacity-control");
+    const opacityRow = createMikuElement("div", "codex-miku-opacity-control");
     const opacityLabel = createMikuElement("span", "", "任务背景透明度");
-    const opacityValue = createMikuElement("output", "", "30%");
-    opacityValue.setAttribute("data-miku-opacity-value", "true");
-    const input = createMikuElement("input");
-    input.type = "range";
+    opacityLabel.id = "codex-miku-opacity-label";
+    const stepper = createMikuElement("div", "codex-miku-opacity-stepper");
+    const decrement = createMikuElement("button", "codex-miku-opacity-button", "－");
+    decrement.type = "button";
+    decrement.setAttribute("data-miku-opacity-decrement", "true");
+    decrement.setAttribute("aria-label", "降低任务背景透明度");
+    const input = createMikuElement("input", "codex-miku-opacity-input");
+    input.type = "number";
     input.min = "5";
     input.max = "100";
     input.step = "1";
+    input.inputMode = "numeric";
     input.setAttribute("data-miku-setting", "taskOpacity");
+    input.setAttribute("aria-labelledby", opacityLabel.id);
+    const increment = createMikuElement("button", "codex-miku-opacity-button", "＋");
+    increment.type = "button";
+    increment.setAttribute("data-miku-opacity-increment", "true");
+    increment.setAttribute("aria-label", "提高任务背景透明度");
+    stepper.appendChild(decrement);
+    stepper.appendChild(input);
+    stepper.appendChild(increment);
     opacityRow.appendChild(opacityLabel);
-    opacityRow.appendChild(opacityValue);
-    opacityRow.appendChild(input);
+    opacityRow.appendChild(stepper);
     panel.appendChild(opacityRow);
 
     const toggles = [
@@ -632,10 +644,42 @@
     reset.addEventListener("click", () => applyMikuSettings(MIKU_DEFAULT_SETTINGS, { bumpRevision: true }));
     panel.appendChild(reset);
 
-    input.addEventListener("input", () => {
+    const currentOpacityPercent = () => Math.round(mikuSettings.taskOpacity * 100);
+    const restoreOpacityInput = () => {
+      input.value = String(currentOpacityPercent());
+    };
+    const commitOpacityInput = () => {
+      const candidate = Number(input.value);
+      if (!Number.isFinite(candidate) || input.value.trim() === "") {
+        restoreOpacityInput();
+        return false;
+      }
+      const percent = Math.min(100, Math.max(5, Math.round(candidate)));
       const next = normalizeMikuSettings(mikuSettings);
-      next.taskOpacity = Number(input.value) / 100;
+      next.taskOpacity = percent / 100;
       applyMikuSettings(next, { bumpRevision: true });
+      input.value = String(percent);
+      return true;
+    };
+    const stepOpacity = (delta) => {
+      const percent = Math.min(100, Math.max(5, currentOpacityPercent() + delta));
+      input.value = String(percent);
+      commitOpacityInput();
+      input.focus?.();
+    };
+    decrement.addEventListener("click", () => stepOpacity(-1));
+    increment.addEventListener("click", () => stepOpacity(1));
+    input.addEventListener("change", commitOpacityInput);
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault?.();
+        commitOpacityInput();
+        input.focus?.();
+      } else if (event.key === "Escape") {
+        event.preventDefault?.();
+        restoreOpacityInput();
+        input.focus?.();
+      }
     });
     trigger.addEventListener("click", () => {
       panel.hidden = !panel.hidden;

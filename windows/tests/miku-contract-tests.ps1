@@ -144,9 +144,14 @@ foreach ($requiredRenderer in @(
     '--miku-task-surface-opacity',
     'window.__CODEX_MIKU_THEME_SETTINGS__',
     'data-codex-miku-owned',
+    'input.type = "number"',
     'min = "5"',
     'max = "100"',
     'step = "1"',
+    'data-miku-opacity-decrement',
+    'data-miku-opacity-increment',
+    '降低任务背景透明度',
+    '提高任务背景透明度',
     '探索并理解代码',
     '构建新功能',
     '审查代码改动',
@@ -158,6 +163,10 @@ foreach ($requiredRenderer in @(
   )) {
   Assert-MikuContract ($renderer.Contains($requiredRenderer)) "Miku renderer is missing: $requiredRenderer"
 }
+Assert-MikuContract (-not $renderer.Contains('input.type = "range"')) `
+  'The unreliable draggable opacity range must be removed.'
+Assert-MikuContract (-not $css.Contains('input[type="range"]')) `
+  'Range-specific CSS must be removed with the draggable opacity control.'
 foreach ($forbiddenSubmitPath in @('.click()', 'requestSubmit(', 'KeyboardEvent(', 'key: "Enter"')) {
   Assert-MikuContract (-not $renderer.Contains($forbiddenSubmitPath)) `
     "Miku prompt cards must not contain a submit path: $forbiddenSubmitPath"

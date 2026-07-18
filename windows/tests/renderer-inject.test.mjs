@@ -42,6 +42,7 @@ function createFixture({
   let hasShell = shellPresent;
   const composerEvents = [];
   let composerFocused = false;
+  let activeElement = null;
   let root;
 
   const queueRootClassMutation = () => {
@@ -121,7 +122,7 @@ function createFixture({
     closest() { return null; },
   };
 
-  const createElement = (tagName) => {
+  const createElement = (tagName = "div") => {
     if (tagName === "canvas" && analysisFixture) {
       return {
         width: 0,
@@ -134,7 +135,17 @@ function createFixture({
         },
       };
     }
-    return {
+    const attributes = new Map();
+    const children = [];
+    const listeners = new Map();
+    const matchesSelector = (node, selector) => {
+      const match = /^\[([^\]=]+)(?:="([^"]*)")?\]$/.exec(selector);
+      if (!match) return false;
+      const actual = node.getAttribute?.(match[1]);
+      return match[2] === undefined ? actual !== null : actual === match[2];
+    };
+    const element = {
+      tagName: String(tagName).toUpperCase(),
       id: "",
       dataset: {},
       style: {},
@@ -142,9 +153,55 @@ function createFixture({
       parentElement: null,
       textContent: "",
       innerHTML: "",
-      setAttribute() {},
-      remove() { nodes.delete(this.id); },
+      hidden: false,
+      appendChild(child) {
+        child.parentElement = this;
+        children.push(child);
+        return child;
+      },
+      prepend(child) {
+        child.parentElement = this;
+        children.unshift(child);
+        return child;
+      },
+      setAttribute(name, value) { attributes.set(name, String(value)); },
+      getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+      addEventListener(type, listener) {
+        const bucket = listeners.get(type) ?? [];
+        bucket.push(listener);
+        listeners.set(type, bucket);
+      },
+      dispatchEvent(event) {
+        if (!event?.type) return false;
+        if (event.target == null) {
+          try { Object.defineProperty(event, "target", { value: this, configurable: true }); } catch {}
+        }
+        for (const listener of listeners.get(event.type) ?? []) listener.call(this, event);
+        return true;
+      },
+      click() { return this.dispatchEvent({ type: "click", preventDefault() {} }); },
+      focus() { activeElement = this; },
+      querySelector(selector) {
+        for (const child of children) {
+          if (matchesSelector(child, selector)) return child;
+          const nested = child.querySelector?.(selector);
+          if (nested) return nested;
+        }
+        return null;
+      },
+      remove() {
+        nodes.delete(this.id);
+        const siblings = this.parentElement?._children;
+        if (siblings) {
+          const index = siblings.indexOf(this);
+          if (index >= 0) siblings.splice(index, 1);
+        }
+        this.parentElement = null;
+      },
+      _attributes: attributes,
+      _children: children,
     };
+    return element;
   };
   if (staleSkin) {
     const style = createElement();
@@ -159,6 +216,7 @@ function createFixture({
     documentElement: root,
     head: root,
     body,
+    get activeElement() { return activeElement; },
     createElement,
     getElementById(id) { return nodes.get(id) ?? null; },
     querySelector(selector) {
@@ -171,6 +229,9 @@ function createFixture({
       return null;
     },
     querySelectorAll(selector) {
+      if (selector === '[data-codex-miku-owned="true"]') {
+        return Array.from(nodes.values()).filter((node) => node.dataset?.codexMikuOwned === "true");
+      }
       if (selector === '[role="main"]') return hasShell && roleMainPresent ? [routeMain] : [];
       if (selector === ".dream-task") return routeClasses.has("dream-task") ? [routeMain] : [];
       if (selector === ".dream-home-utility") {
@@ -409,6 +470,44 @@ vm.runInNewContext(buildPayload({}, { taskOpacity: 1 }), fullyTransparentTaskFix
 assert.equal(fullyTransparentTaskFixture.rootStyles.get("--miku-task-opacity"), "1.00");
 assert.equal(fullyTransparentTaskFixture.rootStyles.get("--miku-task-surface-opacity"), "0%");
 assert.equal(fullyTransparentTaskFixture.context.window.__CODEX_MIKU_THEME_SETTINGS__.value.taskOpacity, 1);
+
+const numberControlFixture = createFixture({ shellPresent: true });
+vm.runInNewContext(buildPayload({}, { taskOpacity: .38 }), numberControlFixture.context);
+const settingsPanel = numberControlFixture.nodes.get("codex-miku-theme-settings");
+const opacityInput = settingsPanel.querySelector('[data-miku-setting="taskOpacity"]');
+const decrementOpacity = settingsPanel.querySelector('[data-miku-opacity-decrement="true"]');
+const incrementOpacity = settingsPanel.querySelector('[data-miku-opacity-increment="true"]');
+assert.equal(opacityInput.type, "number");
+assert.equal(opacityInput.min, "5");
+assert.equal(opacityInput.max, "100");
+assert.equal(opacityInput.step, "1");
+assert.equal(opacityInput.value, "38");
+
+decrementOpacity.click();
+assert.equal(numberControlFixture.rootStyles.get("--miku-task-opacity"), "0.37");
+incrementOpacity.click();
+assert.equal(numberControlFixture.rootStyles.get("--miku-task-opacity"), "0.38");
+
+opacityInput.value = "101";
+opacityInput.dispatchEvent({ type: "change" });
+assert.equal(opacityInput.value, "100");
+assert.equal(numberControlFixture.rootStyles.get("--miku-task-opacity"), "1.00");
+
+opacityInput.value = "";
+opacityInput.dispatchEvent({ type: "change" });
+assert.equal(opacityInput.value, "100");
+
+opacityInput.focus();
+opacityInput.value = "4";
+opacityInput.dispatchEvent({ type: "keydown", key: "Enter", preventDefault() {} });
+assert.equal(opacityInput.value, "5");
+assert.equal(numberControlFixture.context.document.activeElement, opacityInput);
+
+const revisionBeforeEscape = numberControlFixture.context.window.__CODEX_MIKU_THEME_SETTINGS__.revision;
+opacityInput.value = "77";
+opacityInput.dispatchEvent({ type: "keydown", key: "Escape", preventDefault() {} });
+assert.equal(opacityInput.value, "5");
+assert.equal(numberControlFixture.context.window.__CODEX_MIKU_THEME_SETTINGS__.revision, revisionBeforeEscape);
 
 const composerFixture = createFixture({ shellPresent: true, composerPresent: true });
 vm.runInNewContext(payload, composerFixture.context);

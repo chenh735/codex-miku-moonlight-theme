@@ -899,13 +899,50 @@ html.codex-miku-theme .codex-miku-setting-row {
 
 html.codex-miku-theme .codex-miku-opacity-control {
   display: grid;
-  grid-template-columns: 1fr auto;
   gap: 8px;
   margin: 10px 0 12px;
 }
 
-html.codex-miku-theme .codex-miku-opacity-control input[type="range"] {
-  accent-color: var(--miku-cyan);
+html.codex-miku-theme .codex-miku-opacity-stepper {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  gap: 8px;
+}
+
+html.codex-miku-theme .codex-miku-opacity-stepper > * {
+  min-height: 38px;
+  border: 1px solid rgba(109, 236, 244, .4);
+  border-radius: 10px;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+html.codex-miku-theme .codex-miku-opacity-button {
+  background: rgba(57, 230, 223, .14);
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+html.codex-miku-theme .codex-miku-opacity-button:hover {
+  background: rgba(57, 230, 223, .24);
+}
+
+html.codex-miku-theme .codex-miku-opacity-input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 10px;
+  background: rgba(5, 18, 42, .24);
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+html.codex-miku-theme .codex-miku-opacity-input:focus {
+  border-color: rgba(109, 236, 244, .82);
+  outline: 2px solid rgba(109, 236, 244, .24);
+  outline-offset: 1px;
 }
 
 html.codex-miku-theme .codex-miku-settings-status {
