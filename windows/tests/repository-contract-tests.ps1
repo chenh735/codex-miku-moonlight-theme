@@ -101,4 +101,24 @@ Assert-RepositoryContract ($installation.Contains('injector.log')) 'Installation
 Assert-RepositoryContract ($installation.Contains($submitIssue)) 'Installation guide must explain issue reporting.'
 Assert-RepositoryContract ($upstream.Contains('d4087e6e992b478f4626ba11e553f8bc19aea14f')) 'Pinned upstream commit changed.'
 
+$workflow = Read-RepositoryUtf8 '.github\workflows\release.yml'
+foreach ($required in @(
+    "tags: ['v*']",
+    'contents: write',
+    'runs-on: windows-latest',
+    'node-version: 22',
+    'shell: pwsh',
+    'pwsh -NoProfile',
+    'powershell.exe -NoProfile',
+    '.\windows\tests\run-tests.ps1',
+    '.\windows\tests\miku-contract-tests.ps1',
+    '.\windows\tests\miku-product-contract-tests.ps1',
+    '.\windows\scripts\package-release.ps1',
+    'gh release create'
+  )) {
+  Assert-RepositoryContract ($workflow.Contains($required)) "Release workflow is missing: $required"
+}
+Assert-RepositoryContract (-not $workflow.Contains('pull_request_target')) 'Release workflow must not use pull_request_target.'
+Assert-RepositoryContract (-not $workflow.Contains('0.0.0.0')) 'Release workflow must not weaken the loopback contract.'
+
 Write-Host 'PASS: root repository entry-point contracts.'
