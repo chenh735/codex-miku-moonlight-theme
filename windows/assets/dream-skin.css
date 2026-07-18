@@ -870,18 +870,22 @@ html.codex-miku-theme #codex-miku-theme-settings[hidden] {
 
 html.codex-miku-theme .codex-miku-settings-trigger {
   position: fixed;
-  top: 14px;
-  right: 18px;
+  top: 10px;
+  right: 154px;
   z-index: 2147483001;
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   place-items: center;
   border: 1px solid rgba(109, 236, 244, .5);
   border-radius: 50%;
   background: linear-gradient(145deg, rgba(17, 37, 72, .9), rgba(71, 45, 134, .86));
   color: #eaffff;
   box-shadow: 0 7px 22px rgba(44, 161, 235, .28);
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 html.codex-miku-theme .codex-miku-setting-row {
@@ -1114,8 +1118,13 @@ html.codex-miku-theme.miku-effects-paused .codex-miku-meteor {
   }
 
   html.codex-miku-theme #codex-miku-theme-settings {
-    top: 54px;
+    top: 112px;
     right: 10px;
+  }
+
+  html.codex-miku-theme .codex-miku-settings-trigger {
+    top: 62px;
+    right: 12px;
   }
 }
 

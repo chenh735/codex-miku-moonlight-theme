@@ -92,6 +92,34 @@ Assert-MikuContract ([regex]::IsMatch(
     '#codex-miku-theme-settings[^{]*\{[^}]*pointer-events\s*:\s*auto',
     [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
   )) 'The Miku settings panel must remain interactive.'
+$triggerBlock = [regex]::Match(
+  $css,
+  '\.codex-miku-settings-trigger\s*\{(?<body>[^}]*)\}',
+  [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+).Groups['body'].Value
+foreach ($requiredTriggerStyle in @(
+    'top\s*:\s*10px',
+    'right\s*:\s*154px',
+    'width\s*:\s*44px',
+    'height\s*:\s*44px',
+    'pointer-events\s*:\s*auto',
+    '-webkit-app-region\s*:\s*no-drag',
+    'cursor\s*:\s*pointer',
+    'touch-action\s*:\s*manipulation'
+  )) {
+  Assert-MikuContract ([regex]::IsMatch($triggerBlock, $requiredTriggerStyle)) `
+    "The Miku settings trigger is missing its safe hit-area style: $requiredTriggerStyle"
+}
+Assert-MikuContract ([regex]::IsMatch(
+    $css,
+    '@media\s*\(max-width:\s*620px\)[\s\S]*?\.codex-miku-settings-trigger\s*\{[^}]*top\s*:\s*62px[^}]*right\s*:\s*12px',
+    [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+  )) 'Narrow windows must move the Miku settings trigger below the caption controls.'
+Assert-MikuContract ([regex]::IsMatch(
+    $css,
+    '@media\s*\(max-width:\s*620px\)[\s\S]*?#codex-miku-theme-settings\s*\{[^}]*top\s*:\s*112px[^}]*right\s*:\s*10px',
+    [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+  )) 'Narrow windows must place the settings panel below its trigger.'
 Assert-MikuContract ($css.Contains('animation: miku-meteor-pass 24s')) `
   'Meteor animation must remain occasional rather than continuous.'
 Assert-MikuContract ($css.Contains('html.codex-miku-theme.codex-miku-task')) `
