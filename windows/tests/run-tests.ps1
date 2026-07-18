@@ -866,6 +866,8 @@ try {
     (Join-Path $PSScriptRoot 'theme-icon.test.mjs'))
   if ($themeIconTest.ExitCode -ne 0) { throw 'Miku theme icon regression test failed.' }
 
+  & (Join-Path $PSScriptRoot 'repository-contract-tests.ps1')
+
   Write-Host 'PASS: config transactions, restore scoping, state safety, argument quoting, and loopback CDP validation.'
 } finally {
   Remove-Item -LiteralPath $temporaryRoot -Recurse -Force -ErrorAction SilentlyContinue
