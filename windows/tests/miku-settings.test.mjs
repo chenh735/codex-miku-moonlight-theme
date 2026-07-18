@@ -71,10 +71,11 @@ test('sanitizes opacity and discards unknown keys', () => {
   });
 });
 
-test('clamps finite numeric opacity to five through thirty-five percent', () => {
+test('clamps finite numeric opacity to five through one hundred percent', () => {
   const { sanitizeSettings } = subject();
   assert.equal(sanitizeSettings({ taskOpacity: -1 }).taskOpacity, 0.05);
-  assert.equal(sanitizeSettings({ taskOpacity: 2 }).taskOpacity, 0.35);
+  assert.equal(sanitizeSettings({ taskOpacity: 1 }).taskOpacity, 1);
+  assert.equal(sanitizeSettings({ taskOpacity: 2 }).taskOpacity, 1);
   assert.equal(sanitizeSettings({ taskOpacity: Number.NaN }).taskOpacity, 0.30);
   assert.equal(sanitizeSettings({ taskOpacity: '0.2' }).taskOpacity, 0.30);
 });

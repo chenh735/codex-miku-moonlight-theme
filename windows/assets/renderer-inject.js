@@ -115,7 +115,7 @@
       !Array.isArray(source.effects) ? source.effects : {};
     const bool = (candidate, fallback) => typeof candidate === "boolean" ? candidate : fallback;
     const opacity = typeof source.taskOpacity === "number" && Number.isFinite(source.taskOpacity)
-      ? Math.min(.35, Math.max(.05, source.taskOpacity))
+      ? Math.min(1, Math.max(.05, source.taskOpacity))
       : MIKU_DEFAULT_SETTINGS.taskOpacity;
     return {
       schemaVersion: 1,
@@ -592,7 +592,7 @@
     const input = createMikuElement("input");
     input.type = "range";
     input.min = "5";
-    input.max = "35";
+    input.max = "100";
     input.step = "1";
     input.setAttribute("data-miku-setting", "taskOpacity");
     opacityRow.appendChild(opacityLabel);

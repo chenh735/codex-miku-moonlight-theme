@@ -34,7 +34,7 @@ export function sanitizeSettings(value) {
   const rawEffects = source.effects && typeof source.effects === 'object' &&
     !Array.isArray(source.effects) ? source.effects : {};
   const taskOpacity = typeof source.taskOpacity === 'number' && Number.isFinite(source.taskOpacity)
-    ? Math.min(0.35, Math.max(0.05, source.taskOpacity))
+    ? Math.min(1, Math.max(0.05, source.taskOpacity))
     : DEFAULT_SETTINGS.taskOpacity;
   return {
     schemaVersion: 1,

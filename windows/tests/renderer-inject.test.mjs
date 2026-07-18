@@ -404,6 +404,12 @@ assert.equal(savedSettingsFixture.rootStyles.get("--miku-task-surface-opacity"),
 assert.equal(savedSettingsFixture.rootClasses.has("miku-effect-stars-off"), true);
 assert.equal(savedSettingsFixture.context.window.__CODEX_MIKU_THEME_SETTINGS__.value.taskOpacity, .23);
 
+const fullyTransparentTaskFixture = createFixture({ shellPresent: true });
+vm.runInNewContext(buildPayload({}, { taskOpacity: 1 }), fullyTransparentTaskFixture.context);
+assert.equal(fullyTransparentTaskFixture.rootStyles.get("--miku-task-opacity"), "1.00");
+assert.equal(fullyTransparentTaskFixture.rootStyles.get("--miku-task-surface-opacity"), "0%");
+assert.equal(fullyTransparentTaskFixture.context.window.__CODEX_MIKU_THEME_SETTINGS__.value.taskOpacity, 1);
+
 const composerFixture = createFixture({ shellPresent: true, composerPresent: true });
 vm.runInNewContext(payload, composerFixture.context);
 const promptText = "只填充，不发送";

@@ -117,7 +117,7 @@ foreach ($requiredRenderer in @(
     'window.__CODEX_MIKU_THEME_SETTINGS__',
     'data-codex-miku-owned',
     'min = "5"',
-    'max = "35"',
+    'max = "100"',
     'step = "1"',
     '探索并理解代码',
     '构建新功能',
