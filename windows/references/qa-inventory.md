@@ -14,7 +14,7 @@
 
 - Home cards: click each card, compare the exact prompt, and confirm the send action remains untouched.
 - Composer: type, edit and clear text normally after a card populates it.
-- Opacity: verify 5%, 23%, 30%, 35% and 100%; restart at 23% and confirm persistence, then restore 30%.
+- Opacity numeric control: verify decrement, direct entry, and increment from the saved value; verify 5/100 clamping, Enter commit, Escape restore, focus-change persistence, and renderer reinjection synchronization. Restart at 23% and confirm persistence, then restore the user's prior value.
 - Settings trigger: verify the 44×44 `✦` target is left of native caption controls at normal widths and below them at 620 px or narrower.
 - Effect isolation: switch each effect independently, then test pause-all and system reduced motion.
 - Navigation: open a task, return home, open project selection, terminal and diff, and confirm no duplicate Miku DOM.

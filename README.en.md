@@ -45,7 +45,7 @@ If Codex is already open, the themed shortcut asks before restarting it. CDP bin
 
 ## Adjust opacity and motion
 
-Click the round `✦` button at the top of the window, to the left of the Windows minimize control, to open theme settings. Task opacity is adjustable from 5%–100%; the default is 30%. At 100%, the white task-page glass base is fully removed, making the artwork clearest but potentially reducing readability for long text and code. Stars, moon breathing, city lights, the animated border, and meteors can be toggled independently or paused together.
+Click the round `✦` button at the top of the window, to the left of the Windows minimize control, to open theme settings. The `－ [number] ＋` control supports direct numeric entry from 5 through 100; press Enter or move focus to save, or use the buttons to step by one. The default is 30%. At 100%, the white task-page glass base is fully removed, making the artwork clearest but potentially reducing readability for long text and code. Stars, moon breathing, city lights, the animated border, and meteors can be toggled independently or paused together.
 
 Settings are stored only in `%LOCALAPPDATA%\CodexMikuMoonlightTheme\runtime\settings.json` and do not modify Codex configuration.
 
@@ -73,7 +73,7 @@ Restore never deletes Codex tasks, projects, authentication, or other user data.
 
 ## Troubleshooting
 
-- **Home is themed but the task page looks nearly white:** click the round `✦` to the left of the Windows minimize control and increase task opacity; 30% is the default.
+- **Home is themed but the task page looks nearly white:** click the round `✦` to the left of the Windows minimize control, enter a value from 5 through 100, or use `－` and `＋`; 30% is the default.
 - **The official Codex icon has no theme:** use the dedicated `Codex 初音未来主题` shortcut.
 - **Node.js is missing:** run `node --version` and install Node.js 22+ if required.
 - **A Codex update broke the theme:** rerun `.\Install.ps1`.

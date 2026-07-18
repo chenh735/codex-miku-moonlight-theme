@@ -58,6 +58,7 @@ foreach ($required in @(
     'Node.js 22',
     '30%',
     $opacityRange,
+    '－ [数值输入框] ＋',
     '.\Install.ps1',
     '.\Restore.ps1',
     $mikuShortcut,
@@ -71,6 +72,7 @@ foreach ($required in @(
     'Node.js 22',
     '30%',
     $opacityRange,
+    'direct numeric entry',
     '.\Install.ps1',
     '.\Restore.ps1',
     'Codex Miku Moonlight Theme',
@@ -97,6 +99,8 @@ foreach ($required in @(
   Assert-RepositoryContract ($notice.Contains($required)) "NOTICE is missing: $required"
 }
 Assert-RepositoryContract ($installation.Contains('9335')) 'Installation guide must document the default port.'
+Assert-RepositoryContract ($installation.Contains('－ [数值输入框] ＋')) `
+  'Installation guide must document the direct opacity number control.'
 Assert-RepositoryContract ($installation.Contains('injector.log')) 'Installation guide must document the injector log.'
 Assert-RepositoryContract ($installation.Contains($submitIssue)) 'Installation guide must explain issue reporting.'
 Assert-RepositoryContract ($upstream.Contains('d4087e6e992b478f4626ba11e553f8bc19aea14f')) 'Pinned upstream commit changed.'
