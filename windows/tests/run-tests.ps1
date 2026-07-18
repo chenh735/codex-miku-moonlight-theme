@@ -169,6 +169,10 @@ try {
       throw "Installed runtime script failed to parse after its source checkout was removed: $($installedScript.Name)"
     }
   }
+  $installedThemeIcon = Join-Path $engine.Root 'assets\miku-music-mark.ico'
+  if (-not (Test-Path -LiteralPath $installedThemeIcon -PathType Leaf)) {
+    throw 'Installed Miku shortcut icon disappeared with the source checkout.'
+  }
   if (-not (Test-Path -LiteralPath $engine.Start -PathType Leaf) -or
     -not (Test-Path -LiteralPath $engine.Restore -PathType Leaf) -or
     -not (Test-Path -LiteralPath $engine.Tray -PathType Leaf)) {

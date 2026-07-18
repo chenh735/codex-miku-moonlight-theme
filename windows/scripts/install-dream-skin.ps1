@@ -44,6 +44,10 @@ try {
     $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
     $startScript = $engine.Start
     $restoreScript = $engine.Restore
+    $themeIcon = Join-Path $engine.Root 'assets\miku-music-mark.ico'
+    if (-not (Test-Path -LiteralPath $themeIcon -PathType Leaf)) {
+      throw "The installed Miku shortcut icon is missing: $themeIcon"
+    }
     $portArgument = if ($PortExplicit) { " -Port $Port" } else { '' }
 
     foreach ($folder in @($desktop, $startMenu)) {
@@ -52,6 +56,7 @@ try {
       $shortcut.Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$startScript`"$portArgument -PromptRestart"
       $shortcut.WorkingDirectory = $engine.Root
       $shortcut.Description = '使用初音未来·月光都市主题启动官方 Codex'
+      $shortcut.IconLocation = "$themeIcon,0"
       $shortcut.Save()
     }
 

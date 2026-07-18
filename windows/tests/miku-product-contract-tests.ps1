@@ -35,6 +35,10 @@ Assert-Contract ($common.Contains("'settings.json'")) `
   'The shared Windows helpers must define the runtime settings path.'
 Assert-Contract ($common.Contains("'scripts\miku-settings.mjs'")) `
   'The managed runtime must require the Miku settings module.'
+Assert-Contract ($common.Contains("'assets\miku-music-mark.ico'")) `
+  'The managed runtime must require the Miku shortcut icon.'
+Assert-Contract ($common.Contains("'assets\miku-music-mark.png'")) `
+  'The managed runtime must require the Miku icon source raster.'
 Assert-Contract ($common.Contains('Wait-Process -Id $processId -Timeout 15')) `
   'A verified injector must receive enough time to exit cleanly on Windows.'
 
@@ -51,6 +55,10 @@ Assert-Contract ($installer.Contains("'Codex 初音未来主题.lnk'")) `
   'Installer must create the approved Codex 初音未来主题 shortcut.'
 Assert-Contract ($installer.Contains("'还原 Codex 官方界面.lnk'")) `
   'Installer must create the approved restore shortcut.'
+Assert-Contract ($installer.Contains('$themeIcon = Join-Path $engine.Root ''assets\miku-music-mark.ico''')) `
+  'Installer must resolve the shortcut icon from the managed package.'
+Assert-Contract ($installer.Contains('$shortcut.IconLocation = "$themeIcon,0"')) `
+  'Installer must bind the themed shortcut to the managed Miku icon.'
 Assert-Contract ($restore.Contains("'Codex 初音未来主题.lnk'")) `
   'Restore must remove the approved launcher shortcut during uninstall.'
 Assert-Contract ($restore.Contains("'还原 Codex 官方界面.lnk'")) `

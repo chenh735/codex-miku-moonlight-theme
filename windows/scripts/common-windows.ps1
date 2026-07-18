@@ -146,6 +146,8 @@ function Install-DreamSkinRuntimeEngine {
   $engine = Get-DreamSkinRuntimeEnginePaths -StateRoot $fullStateRoot
   $required = @(
     'assets\miku-moonlight-hero.png',
+    'assets\miku-music-mark.ico',
+    'assets\miku-music-mark.png',
     'assets\dream-skin.css',
     'assets\renderer-inject.js',
     'assets\theme.json',
