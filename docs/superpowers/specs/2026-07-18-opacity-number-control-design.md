@@ -1,7 +1,7 @@
 # Miku Opacity Number Control Design
 
 Date: 2026-07-18
-Status: Approved interaction direction; awaiting written-spec confirmation
+Status: Approved
 
 ## Goal
 
