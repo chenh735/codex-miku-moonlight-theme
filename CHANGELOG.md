@@ -2,6 +2,12 @@
 
 All notable changes to this product are documented here. Versions follow Semantic Versioning.
 
+## [1.0.1] - 2026-07-18
+
+- Moved the `✦` settings trigger clear of the native Windows caption controls, enlarged its hit target, and explicitly excluded it from draggable regions.
+- Extended persisted task opacity adjustment from 5%–35% to 5%–100% while retaining the 30% default.
+- Added responsive trigger placement for narrow windows and documented the readability trade-off at 100%.
+
 ## [1.0.0] - 2026-07-18
 
 - Added the initial public Codex Miku Moonlight Theme for Windows.

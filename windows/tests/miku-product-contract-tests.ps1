@@ -137,7 +137,7 @@ foreach ($checkName in @(
 $qa = Read-Utf8File -Path (Join-Path $windowsRoot 'references\qa-inventory.md')
 $runtimeNotes = Read-Utf8File -Path (Join-Path $windowsRoot 'references\runtime-notes.md')
 Assert-Contract ($qa.Contains('初音未来·月光都市')) 'QA inventory must describe the approved Miku theme.'
-Assert-Contract ($qa.Contains('5%–35%')) 'QA inventory must cover the full opacity range.'
+Assert-Contract ($qa.Contains('5%–100%')) 'QA inventory must cover the full opacity range.'
 Assert-Contract ($runtimeNotes.Contains('%LOCALAPPDATA%\CodexMikuMoonlightTheme\runtime\state.json')) `
   'Runtime notes must document the Miku state path.'
 Assert-Contract (-not $qa.Contains('Arina Hashimoto')) 'QA inventory still describes the old bundled theme.'

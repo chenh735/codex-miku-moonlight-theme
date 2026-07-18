@@ -4,7 +4,7 @@
 
 1. Home shows the approved UI-free Miku moonlight artwork, a live title, four glass action cards, the native sidebar, and the native composer.
 2. Each action card only populates the native composer. It never sends, submits, presses Enter, or clicks a send control.
-3. Task routes reuse the artwork as a visible glass-backed ambient layer. Opacity defaults to 30% and is adjustable across the complete 5%–35% range.
+3. Task routes reuse the artwork as a visible glass-backed ambient layer. Opacity defaults to 30% and is adjustable across the complete 5%–100% range.
 4. Stars, moon breathing, city lights, border flow, and meteor effects are independent. Pause-all and `prefers-reduced-motion` stop animation without changing saved choices.
 5. Sidebar, header, composer, project controls, terminal, diff, dialogs, and scroll remain native and interactive.
 6. The theme survives route changes and renderer reloads while the verified injector runs.
@@ -14,7 +14,8 @@
 
 - Home cards: click each card, compare the exact prompt, and confirm the send action remains untouched.
 - Composer: type, edit and clear text normally after a card populates it.
-- Opacity: verify 5%, 23%, 30% and 35%; restart at 23% and confirm persistence.
+- Opacity: verify 5%, 23%, 30%, 35% and 100%; restart at 23% and confirm persistence, then restore 30%.
+- Settings trigger: verify the 44×44 `✦` target is left of native caption controls at normal widths and below them at 620 px or narrower.
 - Effect isolation: switch each effect independently, then test pause-all and system reduced motion.
 - Navigation: open a task, return home, open project selection, terminal and diff, and confirm no duplicate Miku DOM.
 - Resize: test wide, approximately 900 px, and approximately 620 px layouts.
@@ -30,7 +31,7 @@
 - Miku remains on the right; the left title safe area stays readable.
 - The approved bitmap is never stretched or person-animated.
 - Glass panels retain readable contrast in light and dark appearances.
-- Task text, code, diff and terminal content remain readable over the 30% background and linked glass surface.
+- Task text, code, diff and terminal content remain readable over the default 30% background and linked glass surface; confirm the documented readability trade-off at the optional 100% setting.
 - Decorations never intercept pointer input.
 - Reject black sidebar artifacts, clipped controls, duplicate composers, horizontal overflow, weak contrast, or rasterized native controls.
 

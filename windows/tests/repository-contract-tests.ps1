@@ -49,7 +49,7 @@ $notice = Read-RepositoryUtf8 'NOTICE.md'
 $license = Read-RepositoryUtf8 'LICENSE'
 $installation = Read-RepositoryUtf8 'docs\installation.md'
 $upstream = Read-RepositoryUtf8 'UPSTREAM.md'
-$opacityRange = '5%' + [char]0x2013 + '35%'
+$opacityRange = '5%' + [char]0x2013 + '100%'
 $mikuShortcut = 'Codex ' + (-join [char[]]@(0x521D, 0x97F3, 0x672A, 0x6765, 0x4E3B, 0x9898))
 $submitIssue = (-join [char[]]@(0x63D0, 0x4EA4)) + ' Issue'
 

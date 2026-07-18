@@ -19,7 +19,7 @@ Apply the approved Miku moonlight-city renderer theme through loopback-only Chro
 
 - Managed package: `%LOCALAPPDATA%\CodexMikuMoonlightTheme\package-v1`.
 - Runtime settings/state/logs: `%LOCALAPPDATA%\CodexMikuMoonlightTheme\runtime`.
-- Default task opacity: 30%; allowed range: 5%–35%.
+- Default task opacity: 30%; allowed range: 5%–100%.
 - Approved shortcuts: “Codex 初音未来主题” and “还原 Codex 官方界面”.
 - No tray shortcut, service, scheduled task, Run key, Startup entry, or other persistence.
 - No WindowsApps ownership change, `app.asar` edit, signature change, API/model setting change, or Codex `config.toml` read/write.
